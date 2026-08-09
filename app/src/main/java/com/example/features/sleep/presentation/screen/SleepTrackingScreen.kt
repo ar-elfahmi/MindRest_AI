@@ -1,6 +1,8 @@
 package com.example.features.sleep.presentation.screen
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +24,10 @@ fun SleepTrackingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    val timeRegex = remember { Regex("^([01]\\d|2[0-3]):[0-5]\\d$") }
+    val isBedTimeValid = uiState.bedTime.matches(timeRegex)
+    val isWakeTimeValid = uiState.wakeUpTime.matches(timeRegex)
 
     LaunchedEffect(uiState.errorMessage, uiState.isSuccess) {
         if (uiState.errorMessage != null) {
@@ -68,7 +74,15 @@ fun SleepTrackingScreen(
                 value = uiState.bedTime,
                 onValueChange = { viewModel.onBedTimeChanged(it) },
                 label = { Text("Bed Time (HH:mm)") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                isError = uiState.bedTime.isNotEmpty() && !isBedTimeValid,
+                supportingText = {
+                    if (uiState.bedTime.isNotEmpty() && !isBedTimeValid) {
+                        Text("Use HH:mm, 24-hour (e.g. 22:30)")
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             // Wake Up Time Input Mockup
@@ -76,7 +90,15 @@ fun SleepTrackingScreen(
                 value = uiState.wakeUpTime,
                 onValueChange = { viewModel.onWakeUpTimeChanged(it) },
                 label = { Text("Wake Up Time (HH:mm)") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                isError = uiState.wakeUpTime.isNotEmpty() && !isWakeTimeValid,
+                supportingText = {
+                    if (uiState.wakeUpTime.isNotEmpty() && !isWakeTimeValid) {
+                        Text("Use HH:mm, 24-hour (e.g. 06:30)")
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             // Total Sleep Duration (Read Only)
@@ -130,9 +152,17 @@ fun SleepTrackingScreen(
             Button(
                 onClick = { viewModel.onSaveClicked() },
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp)
+                contentPadding = PaddingValues(16.dp),
+                enabled = !uiState.isSaving && isBedTimeValid && isWakeTimeValid
             ) {
-                Text("Save")
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(if (uiState.isSaving) "Saving..." else "Save")
             }
         }
     }

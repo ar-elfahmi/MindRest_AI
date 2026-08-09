@@ -1,13 +1,7 @@
 package com.example
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.lifecycle.lifecycleScope
-import com.example.core.network.SupabaseClient
-import io.github.jan.supabase.auth.auth
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,10 +19,16 @@ import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import com.example.features.authentication.data.repository.AuthRepositoryImpl
+import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -59,17 +59,6 @@ import com.example.features.statistics.presentation.screen.StatisticsScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // --- TEST KONEKSI SUPABASE ---
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val session = SupabaseClient.client.auth.currentSessionOrNull()
-                Log.d("SupabaseTest", "✅ Koneksi Berhasil! Status Sesi: $session")
-            } catch (e: Exception) {
-                Log.e("SupabaseTest", "❌ Koneksi Gagal: ${e.message}")
-            }
-        }
-
         enableEdgeToEdge()
         setContent {
             var isDark by remember { mutableStateOf(true) }
@@ -88,6 +77,12 @@ fun MainApp(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // Shared AuthRepository instance — dipakai SplashScreen untuk initial routing
+    // dan ProfileScreen untuk sign-out.
+    val authRepository = remember { AuthRepositoryImpl() }
+    val sessionStatus by authRepository.sessionStatus.collectAsState()
+    val scope = rememberCoroutineScope()
 
     // Tab items mapped to main screens
     val tabItems = listOf(
@@ -139,6 +134,25 @@ fun MainApp(
         ) {
             // Splash Screen
             composable(Screen.Splash.route) {
+                // Pantau session Supabase: kalau sudah login langsung ke Home,
+                // kalau belum ke Login. Loading & RefreshError dianggap belum login.
+                LaunchedEffect(sessionStatus) {
+                    if (currentRoute != Screen.Splash.route) return@LaunchedEffect
+                    when (sessionStatus) {
+                        is SessionStatus.Authenticated -> {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Splash.route) { inclusive = true }
+                            }
+                        }
+                        is SessionStatus.NotAuthenticated,
+                        is SessionStatus.RefreshFailure -> {
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(Screen.Splash.route) { inclusive = true }
+                            }
+                        }
+                        SessionStatus.Initializing -> Unit
+                    }
+                }
                 SplashScreen(
                     onNavigateToOnboarding = {
                         navController.navigate(Screen.Onboarding.route) {
@@ -246,8 +260,11 @@ fun MainApp(
                     onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) },
                     onNavigateToAchievements = { navController.navigate(Screen.Achievements.route) },
                     onSignOut = {
-                        navController.navigate(Screen.Login.route) {
-                            popUpTo(Screen.Home.route) { inclusive = true }
+                        scope.launch {
+                            authRepository.signOut()
+                            navController.navigate(Screen.Login.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
                         }
                     }
                 )

@@ -3,7 +3,6 @@ package com.example.features.journal.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.features.journal.presentation.state.JournalUiState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,8 +31,19 @@ class JournalViewModel(
     fun onSaveEntryClicked() {
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, errorMessage = null, isSuccess = false) }
-            
-            val userId = SupabaseClient.client.auth.currentSessionOrNull()?.user?.id ?: ""
+
+            val client = SupabaseClient.client
+            if (client == null) {
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        errorMessage = "Supabase belum dikonfigurasi. Isi .env lalu rebuild."
+                    )
+                }
+                return@launch
+            }
+
+            val userId = client.auth.currentSessionOrNull()?.user?.id ?: ""
             if (userId.isEmpty()) {
                 _uiState.update { it.copy(isSaving = false, errorMessage = "User not logged in") }
                 return@launch
@@ -45,23 +55,61 @@ class JournalViewModel(
             )
 
             val result = repository.insertJournalEntry(entry)
-            
-            _uiState.update { 
+
+            _uiState.update {
                 if (result.isSuccess) {
                     it.copy(
                         isSaving = false,
                         journalText = "",
                         errorMessage = null,
                         isSuccess = true
-                    ) 
+                    )
                 } else {
                     it.copy(
                         isSaving = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to save journal",
+                        errorMessage = "Failed to save journal entry. Please try again.",
                         isSuccess = false
                     )
                 }
             }
+
+            if (result.isSuccess) onLoadHistory()
         }
+    }
+
+    fun onLoadHistory(limit: Long = 50) {
+        viewModelScope.launch {
+            val client = SupabaseClient.client
+            if (client == null) {
+                _uiState.update { it.copy(historyError = "Supabase belum dikonfigurasi.") }
+                return@launch
+            }
+            val userId = client.auth.currentSessionOrNull()?.user?.id ?: ""
+            if (userId.isEmpty()) {
+                _uiState.update { it.copy(historyError = "User not logged in") }
+                return@launch
+            }
+
+            _uiState.update { it.copy(isLoadingHistory = true, historyError = null) }
+
+            repository.getJournalEntries(userId, limit)
+                .onSuccess { logs ->
+                    _uiState.update {
+                        it.copy(isLoadingHistory = false, recentEntries = logs, historyError = null)
+                    }
+                }
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isLoadingHistory = false,
+                            historyError = e.message ?: "Failed to load journal history.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onHistoryErrorShown() {
+        _uiState.update { it.copy(historyError = null) }
     }
 }

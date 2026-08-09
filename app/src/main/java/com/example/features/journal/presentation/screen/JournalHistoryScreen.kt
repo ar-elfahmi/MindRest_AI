@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -41,7 +42,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.designsystem.MindRestTheme
+import com.example.core.network.dto.JournalEntryRow
+import com.example.features.journal.presentation.viewmodel.JournalViewModel
 
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.IconButton
@@ -51,34 +59,15 @@ import androidx.compose.material3.IconButton
 fun JournalHistoryScreen(
     onNavigateBack: () -> Unit,
     onStartNewSessionClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: JournalViewModel = viewModel(),
 ) {
-    val mockEntries = listOf(
-        JournalEntryData(
-            date = "12 Oktober 2023",
-            moodEmoji = "😔",
-            moodText = "Cemas",
-            summary = "Membahas rasa gugup menghadapi tenggat waktu proyek. Fokus pada teknik pernapasan 4-7-8."
-        ),
-        JournalEntryData(
-            date = "11 Oktober 2023",
-            moodEmoji = "😐",
-            moodText = "Overthinking",
-            summary = "Mengeksplorasi pikiran yang terus berputar tentang masa depan karir. Menemukan beberapa langkah kecil yang bisa diambil."
-        ),
-        JournalEntryData(
-            date = "09 Oktober 2023",
-            moodEmoji = "😊",
-            moodText = "Tenang",
-            summary = "Sesi singkat tentang rasa syukur. Merasa lebih damai setelah melakukan jalan sore."
-        ),
-        JournalEntryData(
-            date = "08 Oktober 2023",
-            moodEmoji = "😫",
-            moodText = "Lelah",
-            summary = "Kelelahan fisik dan mental setelah rapat panjang. Mengidentifikasi kebutuhan untuk tidur lebih awal hari ini."
-        )
-    )
+    val state by viewModel.uiState.collectAsState()
+
+    // Auto-load history setiap kali screen dibuka.
+    LaunchedEffect(Unit) { viewModel.onLoadHistory() }
+
+    val entries = state.recentEntries.map { it.toJournalEntryData() }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -135,16 +124,92 @@ fun JournalHistoryScreen(
                 )
             }
             
-            items(mockEntries) { entry ->
-                JournalEntryCard(
-                    entry = entry,
-                    onClick = { /* TODO: Navigate to journal detail */ },
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .fillMaxWidth()
-                )
+            when {
+                state.isLoadingHistory && entries.isEmpty() -> item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(strokeWidth = 2.dp)
+                    }
+                }
+
+                state.historyError != null && entries.isEmpty() -> item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = state.historyError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+
+                entries.isEmpty() -> item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Belum ada entri jurnal. Mulai sesi pertama kamu!",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
+
+                else -> items(entries) { entry ->
+                    JournalEntryCard(
+                        entry = entry,
+                        onClick = { /* TODO: Navigate to journal detail */ },
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .fillMaxWidth()
+                    )
+                }
             }
         }
+    }
+}
+
+/** Konversi row Supabase ke model UI — format tanggal sederhana untuk MVP. */
+private fun JournalEntryRow.toJournalEntryData(): JournalEntryData {
+    val displayDate = formatIsoTimestamp(createdAt)
+    val snippet = content.take(140).let { if (content.length > 140) "$it…" else it }
+    return JournalEntryData(
+        date = displayDate,
+        moodEmoji = "📝",
+        moodText = "Refleksi",
+        summary = snippet.ifBlank { "(kosong)" }
+    )
+}
+
+private fun formatIsoTimestamp(iso: String): String {
+    // Format PostgREST default: "2025-08-09T14:23:11.123456+00:00" atau "2025-08-09T14:23:11Z"
+    // Kita potong ke "09 Aug 2025 · 14:23" — cukup informatif tanpa library tambahan.
+    return try {
+        val datePart = iso.substringBefore('T')
+        val timePart = iso.substringAfter('T').substringBeforeLast(':').take(5)
+        val months = listOf("Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
+        val parts = datePart.split("-")
+        if (parts.size == 3) {
+            val day = parts[2].toIntOrNull() ?: 0
+            val month = parts[1].toIntOrNull()?.let { months.getOrNull(it - 1) } ?: parts[1]
+            val year = parts[0]
+            "%02d %s %s · %s".format(day, month, year, timePart)
+        } else iso
+    } catch (e: Exception) {
+        iso
     }
 }
 

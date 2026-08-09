@@ -11,6 +11,15 @@
 .DS_Store
 /build
 /captures
+
+# IDE
+/.idea/
+
+# Local tooling
+/.pi-subagents/
+
+# Crash dumps
+bugreport-*.zip
 .externalNativeBuild
 .cxx
 local.properties

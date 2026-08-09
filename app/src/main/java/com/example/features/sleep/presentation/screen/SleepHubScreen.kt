@@ -19,9 +19,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.core.designsystem.*
 import com.example.core.designsystem.components.*
+import com.example.core.network.dto.SleepLogRow
+import com.example.features.sleep.presentation.viewmodel.SleepViewModel
 
 private data class RecommendationItem(
     val category: String,
@@ -36,8 +40,14 @@ private data class RecommendationItem(
 @Composable
 fun SleepHubScreen(
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SleepViewModel = viewModel(),
 ) {
+    val state by viewModel.uiState.collectAsState()
+
+    // Auto-load history ketika screen pertama kali dibuka.
+    LaunchedEffect(Unit) { viewModel.onLoadHistory() }
+
     var selectedPeriod by remember { mutableStateOf("Weekly") }
 
     val recommendations = listOf(
@@ -199,7 +209,109 @@ fun SleepHubScreen(
                     tags = item.tags
                 )
             }
+
+            // SECTION 4: RECENT SLEEP LOGS (data real dari Supabase)
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                SectionLabel(text = "RIWAYAT TIDUR TERAKHIR")
+            }
+
+            when {
+                state.isLoadingHistory && state.recentSleepLogs.isEmpty() -> item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(strokeWidth = 2.dp)
+                    }
+                }
+
+                state.historyError != null && state.recentSleepLogs.isEmpty() -> item {
+                    Text(
+                        text = state.historyError!!,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+
+                state.recentSleepLogs.isEmpty() -> item {
+                    Text(
+                        text = "Belum ada riwayat tidur. Simpan log pertamamu!",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+
+                else -> items(state.recentSleepLogs.take(7)) { row ->
+                    RecentSleepLogCard(row)
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun RecentSleepLogCard(row: SleepLogRow) {
+    BaseCard(
+        radius = 16.dp,
+        padding = 14.dp
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.NightsStay,
+                contentDescription = null,
+                tint = FeatureJourney
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${formatTimeShort(row.bedTime)} → ${formatTimeShort(row.wakeUpTime)}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "Kualitas: ${row.sleepQuality} · ${formatIsoDateShort(row.createdAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/** Potong ISO timestamp "2025-08-09T22:00:00Z" menjadi "22:00". */
+private fun formatTimeShort(iso: String): String {
+    return try {
+        iso.substringAfter('T').take(5)
+    } catch (e: Exception) {
+        iso
+    }
+}
+
+/** Potong ISO timestamp menjadi "09 Agu". */
+private fun formatIsoDateShort(iso: String): String {
+    return try {
+        val datePart = iso.substringBefore('T')
+        val months = listOf("Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des")
+        val parts = datePart.split("-")
+        if (parts.size == 3) {
+            val day = parts[2].toIntOrNull() ?: 0
+            val month = parts[1].toIntOrNull()?.let { months.getOrNull(it - 1) } ?: parts[1]
+            "%02d %s".format(day, month)
+        } else iso
+    } catch (e: Exception) {
+        iso
     }
 }
 

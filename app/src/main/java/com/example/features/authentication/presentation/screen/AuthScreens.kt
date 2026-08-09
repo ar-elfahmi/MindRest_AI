@@ -37,6 +37,8 @@ import com.example.core.designsystem.components.MoonLogo
 import com.example.core.designsystem.components.PrimaryButton
 import com.example.core.designsystem.components.TextInputField
 import com.example.core.designsystem.components.PasswordInputField
+import com.example.features.authentication.presentation.viewmodel.LoginViewModel
+import com.example.features.authentication.presentation.viewmodel.RegisterViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.activity.compose.BackHandler
@@ -1042,36 +1044,17 @@ fun GoogleLogoIcon(modifier: Modifier = Modifier) {
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    // `remember` penting — default parameter akan dievaluasi ulang tiap recompose,
+    // yang akan membuat ViewModel baru dan me-reset state ke nilai awal.
+    val viewModel: LoginViewModel = remember { LoginViewModel.create() }
+    val state by viewModel.uiState.collectAsState()
 
-    val handleSignIn = {
-        var isValid = true
-        if (email.trim().isEmpty()) {
-            emailError = "Email is required"
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
-            emailError = "Please enter a valid email address"
-            isValid = false
-        } else {
-            emailError = null
-        }
-
-        if (password.isEmpty()) {
-            passwordError = "Password is required"
-            isValid = false
-        } else if (password.length < 8) {
-            passwordError = "Password must be at least 8 characters"
-            isValid = false
-        } else {
-            passwordError = null
-        }
-
-        if (isValid) {
+    // Trigger navigasi tepat sekali setelah sign-in berhasil.
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            viewModel.consumeSuccess()
             onLoginSuccess()
         }
     }
@@ -1143,26 +1126,20 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     TextInputField(
-                        value = email,
-                        onValueChange = { 
-                            email = it
-                            if (emailError != null) emailError = null
-                        },
+                        value = state.email,
+                        onValueChange = viewModel::onEmailChange,
                         placeholder = "Email address",
                         leadingIcon = Icons.Default.MailOutline,
                         keyboardType = KeyboardType.Email,
-                        error = emailError,
+                        error = state.emailError,
                         testTag = "email_input"
                     )
 
                     PasswordInputField(
-                        value = password,
-                        onValueChange = { 
-                            password = it
-                            if (passwordError != null) passwordError = null
-                        },
+                        value = state.password,
+                        onValueChange = viewModel::onPasswordChange,
                         placeholder = "Password",
-                        error = passwordError,
+                        error = state.passwordError,
                         testTag = "password_input"
                     )
                 }
@@ -1189,11 +1166,27 @@ fun LoginScreen(
 
                 // 6. SignInButton
                 PrimaryButton(
-                    text = "Sign In",
-                    onClick = handleSignIn,
+                    text = if (state.isLoading) "Signing in..." else "Sign In",
+                    onClick = { viewModel.onSubmit() },
                     modifier = Modifier.fillMaxWidth(),
                     testTag = "sign_in_button"
                 )
+
+                // 6b. Error banner — tampil di bawah tombol saat submit gagal.
+                state.errorMessage?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp)
+                            .testTag("sign_in_error"),
+                        textAlign = TextAlign.Start,
+                    )
+                }
             }
 
             // Bottom stack: Divider, Google SSO, and Sign Up row
@@ -1239,7 +1232,7 @@ fun LoginScreen(
                         .clip(RoundedCornerShape(14.dp))
                         .background(MaterialTheme.colorScheme.surface)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
-                        .clickable { onLoginSuccess() } // Simple simulated login via Google too
+                        .clickable(enabled = !state.isLoading) { /* TODO: native Google SSO */ }
                         .testTag("google_sso_button"),
                     contentAlignment = Alignment.Center
                 ) {
@@ -1282,7 +1275,7 @@ fun LoginScreen(
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
-                            .clickable { onNavigateToRegister() }
+                            .clickable(enabled = !state.isLoading) { onNavigateToRegister() }
                             .padding(4.dp)
                             .testTag("sign_up_link")
                     )
@@ -1296,62 +1289,17 @@ fun LoginScreen(
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    // `remember` penting — default parameter akan dievaluasi ulang tiap recompose,
+    // yang akan membuat ViewModel baru dan me-reset state ke nilai awal.
+    val viewModel: RegisterViewModel = remember { RegisterViewModel.create() }
+    val state by viewModel.uiState.collectAsState()
 
-    var fullNameError by remember { mutableStateOf<String?>(null) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
-    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
-
-    val handleRegister = {
-        var isValid = true
-
-        if (fullName.trim().isEmpty()) {
-            fullNameError = "Full name is required"
-            isValid = false
-        } else if (fullName.trim().length < 2) {
-            fullNameError = "Full name must be at least 2 characters"
-            isValid = false
-        } else {
-            fullNameError = null
-        }
-
-        if (email.trim().isEmpty()) {
-            emailError = "Email is required"
-            isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
-            emailError = "Please enter a valid email address"
-            isValid = false
-        } else {
-            emailError = null
-        }
-
-        if (password.isEmpty()) {
-            passwordError = "Password is required"
-            isValid = false
-        } else if (password.length < 8) {
-            passwordError = "Password must be at least 8 characters"
-            isValid = false
-        } else {
-            passwordError = null
-        }
-
-        if (confirmPassword.isEmpty()) {
-            confirmPasswordError = "Please confirm your password"
-            isValid = false
-        } else if (confirmPassword != password) {
-            confirmPasswordError = "Passwords do not match"
-            isValid = false
-        } else {
-            confirmPasswordError = null
-        }
-
-        if (isValid) {
+    // Trigger navigasi tepat sekali setelah sign-up berhasil.
+    LaunchedEffect(state.isSuccess) {
+        if (state.isSuccess) {
+            viewModel.consumeSuccess()
             onRegisterSuccess()
         }
     }
@@ -1386,7 +1334,7 @@ fun RegisterScreen(
                 // 1. BackButton
                 Row(
                     modifier = Modifier
-                        .clickable { onNavigateToLogin() }
+                        .clickable(enabled = !state.isLoading) { onNavigateToLogin() }
                         .padding(vertical = 4.dp)
                         .testTag("back_button"),
                     verticalAlignment = Alignment.CenterVertically
@@ -1435,55 +1383,43 @@ fun RegisterScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     TextInputField(
-                        value = fullName,
-                        onValueChange = {
-                            fullName = it
-                            if (fullNameError != null) fullNameError = null
-                        },
+                        value = state.fullName,
+                        onValueChange = viewModel::onFullNameChange,
                         placeholder = "Full name",
                         leadingIcon = Icons.Default.Person,
-                        error = fullNameError,
+                        error = state.fullNameError,
                         testTag = "full_name_input"
                     )
 
                     TextInputField(
-                        value = email,
-                        onValueChange = {
-                            email = it
-                            if (emailError != null) emailError = null
-                        },
+                        value = state.email,
+                        onValueChange = viewModel::onEmailChange,
                         placeholder = "Email address",
                         leadingIcon = Icons.Default.MailOutline,
                         keyboardType = KeyboardType.Email,
-                        error = emailError,
+                        error = state.emailError,
                         testTag = "email_input"
                     )
 
                     TextInputField(
-                        value = password,
-                        onValueChange = {
-                            password = it
-                            if (passwordError != null) passwordError = null
-                        },
+                        value = state.password,
+                        onValueChange = viewModel::onPasswordChange,
                         placeholder = "Password",
                         leadingIcon = Icons.Default.Lock,
                         keyboardType = KeyboardType.Password,
                         visualTransformation = PasswordVisualTransformation(),
-                        error = passwordError,
+                        error = state.passwordError,
                         testTag = "password_input"
                     )
 
                     TextInputField(
-                        value = confirmPassword,
-                        onValueChange = {
-                            confirmPassword = it
-                            if (confirmPasswordError != null) confirmPasswordError = null
-                        },
+                        value = state.confirmPassword,
+                        onValueChange = viewModel::onConfirmPasswordChange,
                         placeholder = "Confirm password",
                         leadingIcon = Icons.Default.Lock,
                         keyboardType = KeyboardType.Password,
                         visualTransformation = PasswordVisualTransformation(),
-                        error = confirmPasswordError,
+                        error = state.confirmPasswordError,
                         testTag = "confirm_password_input"
                     )
                 }
@@ -1550,11 +1486,27 @@ fun RegisterScreen(
 
                 // 6. CreateAccountButton (PrimaryButton)
                 PrimaryButton(
-                    text = "Create Account",
-                    onClick = handleRegister,
+                    text = if (state.isLoading) "Creating account..." else "Create Account",
+                    onClick = { viewModel.onSubmit() },
                     modifier = Modifier.fillMaxWidth(),
                     testTag = "create_account_button"
                 )
+
+                // 6b. Error banner
+                state.errorMessage?.let { err ->
+                    Text(
+                        text = err,
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp)
+                            .testTag("register_error"),
+                        textAlign = TextAlign.Start,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -1579,7 +1531,7 @@ fun RegisterScreen(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
-                        .clickable { onNavigateToLogin() }
+                        .clickable(enabled = !state.isLoading) { onNavigateToLogin() }
                         .padding(4.dp)
                         .testTag("sign_in_link")
                 )
