@@ -2,9 +2,11 @@ package com.example.features.sleep.presentation.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -20,6 +22,7 @@ import com.example.features.sleep.presentation.viewmodel.SleepViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SleepTrackingScreen(
+    onNavigateBack: () -> Unit = {},
     viewModel: SleepViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -49,9 +52,18 @@ fun SleepTrackingScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Sleep Tracking") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Kembali"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         }

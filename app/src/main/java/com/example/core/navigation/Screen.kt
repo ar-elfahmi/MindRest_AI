@@ -17,6 +17,8 @@ sealed class Screen(val route: String) {
     // Secondary Destinations (L2 Spokes)
     object Journal : Screen("journal")
     object AiJournal : Screen("ai_journal")
+    object MoodTracking : Screen("mood_tracking")
+    object SleepTracking : Screen("sleep_tracking")
     object Lifestyle : Screen("lifestyle")
     object Notifications : Screen("notifications")
     object Reminder : Screen("reminder")

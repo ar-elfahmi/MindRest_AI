@@ -39,6 +39,7 @@ import com.example.core.designsystem.components.BottomNavigationBar
 import com.example.core.designsystem.components.NavigationItem
 import com.example.core.navigation.Screen
 import com.example.features.achievements.presentation.screen.AchievementsScreen
+import com.example.features.mood.presentation.screen.MoodTrackingScreen
 import com.example.features.authentication.presentation.screen.LoginScreen
 import com.example.features.authentication.presentation.screen.OnboardingScreen
 import com.example.features.authentication.presentation.screen.RegisterScreen
@@ -54,6 +55,7 @@ import com.example.features.relaxation.presentation.screen.AdvancedRelaxationScr
 import com.example.features.reminder.presentation.screen.ReminderScreen
 import com.example.features.settings.presentation.screen.SettingsScreen
 import com.example.features.sleep.presentation.screen.SleepHubScreen
+import com.example.features.sleep.presentation.screen.SleepTrackingScreen
 import com.example.features.statistics.presentation.screen.StatisticsScreen
 
 class MainActivity : ComponentActivity() {
@@ -221,6 +223,7 @@ fun MainApp(
                     onNavigateToRelaxation = { navController.navigate(Screen.Relaxation.route) },
                     onNavigateToSleepTracking = { navController.navigate(Screen.Sleep.route) },
                     onNavigateToIkigai = { navController.navigate(Screen.Ikigai.route) },
+                    onNavigateToMoodTracking = { navController.navigate(Screen.MoodTracking.route) },
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToRecommendations = { navController.navigate(Screen.Sleep.route) },
@@ -235,7 +238,8 @@ fun MainApp(
             // Sleep Tab
             composable(Screen.Sleep.route) {
                 SleepHubScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onLogSleepClick = { navController.navigate(Screen.SleepTracking.route) }
                 )
             }
 
@@ -328,6 +332,20 @@ fun MainApp(
             // Achievements Secondary Screen
             composable(Screen.Achievements.route) {
                 AchievementsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Mood Tracking Secondary Screen (TASK 1.2: dead code diaktifkan)
+            composable(Screen.MoodTracking.route) {
+                MoodTrackingScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Sleep Tracking Secondary Screen (TASK 1.2: dead code diaktifkan)
+            composable(Screen.SleepTracking.route) {
+                SleepTrackingScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

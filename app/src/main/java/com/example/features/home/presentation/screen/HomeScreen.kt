@@ -51,10 +51,7 @@ import com.example.core.designsystem.NumberS
 import com.example.core.designsystem.NumberXl
 import com.example.core.designsystem.components.*
 import com.example.features.mood.presentation.viewmodel.MoodViewModel
-import com.example.features.sleep.presentation.state.SleepQuality
 import com.example.features.sleep.presentation.viewmodel.SleepViewModel
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 // Mock data model for local reminders state
 data class ReminderItemData(
@@ -71,6 +68,7 @@ fun HomeScreen(
     onNavigateToRelaxation: () -> Unit = {},
     onNavigateToSleepTracking: () -> Unit = {},
     onNavigateToIkigai: () -> Unit = {},
+    onNavigateToMoodTracking: () -> Unit = {},
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToRecommendations: () -> Unit = {},
@@ -85,10 +83,21 @@ fun HomeScreen(
 ) {
     // Local state for bottom sheet
     var showCheckInSheet by remember { mutableStateOf(false) }
-    var hasCheckedInToday by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+
+    val moodUiState by moodViewModel.uiState.collectAsState()
+
+    // "Sudah check-in hari ini" ditentukan oleh DB via MoodUiState.todayMoodScore
+    // (single source of truth — survive recompose/restart/tab switch).
+    val hasCheckedInToday = moodUiState.todayMoodScore != null
+
+    // Auto-load weekly mood scores (TASK 2A) + today check-in state.
+    LaunchedEffect(Unit) {
+        moodViewModel.onLoadWeeklyScores()
+        moodViewModel.onLoadTodayMood()
+    }
 
     // Tampilkan error snackbar bila insert mood/tidur gagal.
     LaunchedEffect(Unit) {
@@ -104,6 +113,15 @@ fun HomeScreen(
             state.errorMessage?.let {
                 snackbarHostState.showSnackbar("Tidur: $it")
                 sleepViewModel.onMessageShown()
+            }
+        }
+    }
+    // Tampilkan error snackbar untuk weekly aggregation (TASK 2A).
+    LaunchedEffect(Unit) {
+        moodViewModel.uiState.collect { state ->
+            state.weeklyError?.let {
+                snackbarHostState.showSnackbar("Mood mingguan: $it")
+                moodViewModel.onWeeklyErrorShown()
             }
         }
     }
@@ -191,6 +209,41 @@ fun HomeScreen(
                 )
             }
 
+            // 3b. MOOD DETAIL ENTRY (TASK 1.2: route ke MoodTrackingScreen)
+            // Diposisikan setelah check-in supaya langsung visible tanpa scroll.
+            SectionLabel(text = "MOOD LOG")
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onNavigateToMoodTracking() }
+                    .testTag("mood_detail_card"),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Lihat Mood Detail",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "→",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
             // 4. QUICK ACTIONS ROW
             QuickActionsRow(
                 onNavigateToJournal = onNavigateToJournal,
@@ -199,10 +252,12 @@ fun HomeScreen(
                 onNavigateToIkigai = onNavigateToIkigai
             )
 
-            // 5. WEEKLY SLEEP CHART CARD
+            // 5. WEEKLY SLEEP CHART CARD (TASK 2A: skor di-drive oleh mood mingguan
+            //    dari MoodViewModel; rename kartu dan sumber data akan dirapikan
+            //    saat TASK 3A dieksekusi.)
             WeeklySleepChartCard(
                 avgText = "Avg 7.4h this week",
-                weeklyScores = listOf(62, 68, 74, 71, 65, 80, 84),
+                weeklyScores = moodUiState.weeklyMoodScores,
                 onClick = onNavigateToStatistics
             )
 
@@ -236,21 +291,17 @@ fun HomeScreen(
 if (showCheckInSheet) {
         DailyCheckInBottomSheet(
             onDismissRequest = { showCheckInSheet = false },
-            onSave = { emotions, sleepHours ->
+            onSave = { moodScore ->
                 showCheckInSheet = false
-                hasCheckedInToday = true
 
-                // 1. Simpan mood: petakan emosi terpilih → skor 1-5.
-                val moodScore = mapEmotionsToMoodScore(emotions)
+                // TASK 1.1: simpan MOOD SAJA. Input tidur via SleepTrackingScreen.
+                // Tidak ada lagi deriveSleepFromDuration → sleep_logs bersih dari noise.
+                // hasCheckedInToday auto-update lewat MoodViewModel.onLoadTodayMood()
+                // di-trigger setelah save sukses — single source of truth dari DB.
                 moodViewModel.saveMoodScore(moodScore)
 
-                // 2. Simpan log tidur: turunkan bed/wake/quality dari durasi.
-                val (bedTime, wakeTime, quality) = deriveSleepFromDuration(sleepHours)
-                sleepViewModel.saveSleepLog(bedTime, wakeTime, quality)
-
-                // 3. Feedback UX (existing logic).
-                val negativeEmotions = setOf("Cemas", "Lelah", "Overthinking", "Kesepian")
-                val needsHelp = emotions.any { it in negativeEmotions }
+                // Feedback UX berbasis skor mood (<= 2 = berat → tawarkan refleksi).
+                val needsHelp = moodScore <= 2
 
                 coroutineScope.launch {
                     if (needsHelp) {
@@ -264,7 +315,7 @@ if (showCheckInSheet) {
                         }
                     } else {
                         snackbarHostState.showSnackbar(
-                            message = "Check-in tersimpan! ✨ (mood + tidur)",
+                            message = "Check-in tersimpan! ✨",
                             duration = SnackbarDuration.Short
                         )
                     }
@@ -827,48 +878,5 @@ fun HomeScreenPreview() {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Helper: petakan emosi Check-in → mood score 1-5 + turunkan log tidur.
-// ---------------------------------------------------------------------------
 
-/**
- * Petakan daftar emosi yang dipilih di DailyCheckInBottomSheet menjadi skor
- * mood 1-5 (1 = Terrible, 5 = Awesome).
- *
- * Strategi: hitung selisih emosi positif vs negatif (net), lalu bagi ke 5 tier.
- */
-private fun mapEmotionsToMoodScore(emotions: List<String>): Int {
-    val positive = setOf("Tenang", "Bersyukur", "Damai", "Fokus", "Bersemangat")
-    val negative = setOf("Lelah", "Cemas", "Overthinking", "Kesepian")
-    val net = emotions.count { it in positive } - emotions.count { it in negative }
-    return when {
-        net >= 2 -> 5  // Awesome
-        net == 1 -> 4  // Good
-        net == 0 -> 3  // Okay
-        net == -1 -> 2 // Bad
-        else -> 1      // Terrible
-    }
-}
-
-/**
- * Turunkan bed_time / wake_up_time / sleep_quality dari durasi tidur (jam).
- *
- * Asumsi: check-in dilakukan pagi hari (“Simpan Jurnal Pagi”), jadi:
- *   • wakeTime ≈ waktu sekarang (user baru bangun)
- *   • bedTime  = sekarang − durasi tidur
- *   • quality  = diturunkan dari durasi (< 5h POOR, 5-7h FAIR, 7-9h GOOD, >9h EXCELLENT)
- */
-private fun deriveSleepFromDuration(hours: Float): Triple<String, String, SleepQuality> {
-    val now = LocalDateTime.now()
-    val fmt = DateTimeFormatter.ofPattern("HH:mm")
-    val wakeTime = now.toLocalTime().format(fmt)
-    val bedTime = now.minusMinutes((hours * 60).toLong()).toLocalTime().format(fmt)
-    val quality = when {
-        hours < 5f -> SleepQuality.POOR
-        hours < 7f -> SleepQuality.FAIR
-        hours <= 9f -> SleepQuality.GOOD
-        else -> SleepQuality.EXCELLENT
-    }
-    return Triple(bedTime, wakeTime, quality)
-}
 

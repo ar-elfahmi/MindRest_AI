@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.NightsStay
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,11 +44,24 @@ fun SleepHubScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SleepViewModel = viewModel(),
+    onLogSleepClick: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    // Auto-load history ketika screen pertama kali dibuka.
-    LaunchedEffect(Unit) { viewModel.onLoadHistory() }
+    // Auto-load history + weekly aggregation (TASK 2B) ketika screen pertama kali dibuka.
+    LaunchedEffect(Unit) {
+        viewModel.onLoadHistory()
+        viewModel.onLoadWeeklyScores()
+    }
+
+    // Tampilkan error snackbar untuk weekly aggregation (TASK 2B).
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(state.weeklyError) {
+        state.weeklyError?.let {
+            snackbarHostState.showSnackbar("Tidur mingguan: $it")
+            viewModel.onWeeklyErrorShown()
+        }
+    }
 
     var selectedPeriod by remember { mutableStateOf("Weekly") }
 
@@ -69,14 +84,23 @@ fun SleepHubScreen(
         )
     )
 
-    val sampleWeeklyScores = listOf(78, 82, 70, 85, 88, 75, 90)
-
     Scaffold(
         topBar = {
             TopBar(
                 title = "Sleep & Insights",
                 onBackClick = onNavigateBack
             )
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onLogSleepClick,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.testTag("fab_log_sleep")
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Log Sleep")
+            }
         },
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background
@@ -192,7 +216,7 @@ fun SleepHubScreen(
                     padding = 16.dp
                 ) {
                     WeeklySleepBarChart(
-                        scores = sampleWeeklyScores,
+                        scores = state.weeklySleepScores,
                         averageScore = 81f,
                         modifier = Modifier.fillMaxWidth()
                     )
