@@ -163,6 +163,64 @@ class SleepViewModel(
         _uiState.update { it.copy(historyError = null) }
     }
 
+    /**
+     * Ambil rata-rata kualitas tidur harian 7 hari terakhir, lalu konversi ke skala 0–100
+     * (POOR=25, FAIR=50, GOOD=75, EXCELLENT=100) untuk chart di SleepHubScreen.
+     *
+     * Hari tanpa data menghasilkan skor 0 (ditampilkan empty bar di chart).
+     * Aman dipanggil dari UI (LaunchedEffect).
+     */
+    fun onLoadWeeklyScores(days: Int = 7) {
+        viewModelScope.launch {
+            val client = SupabaseClient.client
+            if (client == null) {
+                _uiState.update {
+                    it.copy(isLoadingWeekly = false, weeklyError = "Supabase belum dikonfigurasi.")
+                }
+                return@launch
+            }
+            val userId = client.auth.currentSessionOrNull()?.user?.id ?: ""
+            if (userId.isEmpty()) {
+                _uiState.update {
+                    it.copy(isLoadingWeekly = false, weeklyError = "User not logged in")
+                }
+                return@launch
+            }
+
+            _uiState.update { it.copy(isLoadingWeekly = true, weeklyError = null) }
+
+            repository.getDailySleepScores(userId, days = days)
+                .onSuccess { dailyScores ->
+                    // Konversi skor 0.0-1.0 ke 0-100.
+                    // Hari tanpa data → 0 (chart menampilkan bar kosong).
+                    val scores = dailyScores.map { d ->
+                        d.averageScore
+                            ?.let { (it * 100).toInt().coerceIn(0, 100) }
+                            ?: 0
+                    }
+                    _uiState.update {
+                        it.copy(
+                            isLoadingWeekly = false,
+                            weeklySleepScores = scores,
+                            weeklyError = null,
+                        )
+                    }
+                }
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isLoadingWeekly = false,
+                            weeklyError = e.message ?: "Failed to load weekly sleep scores.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onWeeklyErrorShown() {
+        _uiState.update { it.copy(weeklyError = null) }
+    }
+
     private fun calculateSleepDuration(bedTime: String, wakeUpTime: String): String {
         try {
             val format = SimpleDateFormat("HH:mm", Locale.getDefault())
