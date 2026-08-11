@@ -125,6 +125,7 @@ dependencies {
   implementation(libs.retrofit)
   implementation(libs.supabase.postgrest)
   implementation(libs.supabase.auth)
+  implementation(libs.supabase.functions)
   implementation(libs.ktor.client.okhttp)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
