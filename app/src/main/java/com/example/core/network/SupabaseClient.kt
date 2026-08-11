@@ -4,6 +4,7 @@ import com.example.BuildConfig
 import io.github.jan.supabase.SupabaseClient as SbClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
 
 /**
@@ -46,6 +47,7 @@ object SupabaseClient {
                 ) {
                     install(Postgrest)
                     install(Auth)
+                    install(Functions)
                 }
             }.getOrElse { e ->
                 android.util.Log.e(

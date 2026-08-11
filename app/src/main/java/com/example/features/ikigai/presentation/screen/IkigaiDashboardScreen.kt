@@ -30,6 +30,8 @@ import com.example.core.designsystem.MindRestTheme
 @Composable
 fun IkigaiDashboardScreen(
     onNavigateBack: () -> Unit,
+    /** Dipakai tombol "Mulai Assessment Ikigai" (TASK 2.3). */
+    onStartAssessment: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -71,6 +73,21 @@ fun IkigaiDashboardScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // SECTION 0: MULAI ASSESSMENT (TASK 2.3 — tombol masuk ke onboarding)
+            item {
+                Button(
+                    onClick = onStartAssessment,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+                ) {
+                    Text(
+                        text = "Mulai Assessment Ikigai",
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            }
+
             // SECTION 1: RANGKUMAN JURNAL
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -306,6 +323,6 @@ private fun ActionCard(
 @Composable
 fun IkigaiDashboardScreenPreview() {
     MindRestTheme {
-        IkigaiDashboardScreen(onNavigateBack = {})
+        IkigaiDashboardScreen(onNavigateBack = {}, onStartAssessment = {})
     }
 }

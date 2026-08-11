@@ -25,4 +25,9 @@ sealed class Screen(val route: String) {
     object Statistics : Screen("statistics")
     object Settings : Screen("settings")
     object Achievements : Screen("achievements")
+
+    // Ikigai — onboarding assessment + loading placeholder + report UI (TASK 3.3).
+    object IkigaiAssessment : Screen("ikigai_assessment")
+    object IkigaiReportLoading : Screen("ikigai_report_loading")
+    object IkigaiReport : Screen("ikigai_report")
 }

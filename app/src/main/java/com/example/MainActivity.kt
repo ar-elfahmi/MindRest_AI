@@ -45,7 +45,10 @@ import com.example.features.authentication.presentation.screen.OnboardingScreen
 import com.example.features.authentication.presentation.screen.RegisterScreen
 import com.example.features.authentication.presentation.screen.SplashScreen
 import com.example.features.home.presentation.screen.HomeScreen
+import com.example.features.ikigai.presentation.screen.IkigaiAssessmentScreen
 import com.example.features.ikigai.presentation.screen.IkigaiDashboardScreen
+import com.example.features.ikigai.presentation.screen.IkigaiReportLoadingScreen
+import com.example.features.ikigai.presentation.screen.IkigaiReportScreen
 import com.example.features.journal.presentation.screen.JournalHistoryScreen
 import com.example.features.journal.presentation.screen.AiJournalScreen
 import com.example.features.lifestyle.presentation.screen.LifestyleScreen
@@ -253,7 +256,8 @@ fun MainApp(
             // Ikigai Tab
             composable(Screen.Ikigai.route) {
                 IkigaiDashboardScreen(
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    onStartAssessment = { navController.navigate(Screen.IkigaiAssessment.route) }
                 )
             }
 
@@ -347,6 +351,39 @@ fun MainApp(
             composable(Screen.SleepTracking.route) {
                 SleepTrackingScreen(
                     onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Ikigai Assessment (TASK 2.3: onboarding 6 pertanyaan)
+            composable(Screen.IkigaiAssessment.route) {
+                IkigaiAssessmentScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onAssessmentSaved = { _ ->
+                        navController.navigate(Screen.IkigaiReport.route) {
+                            popUpTo(Screen.IkigaiAssessment.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            // Ikigai Report Loading placeholder (TASK 2.3: optional entry during
+            // regeneration). Konten UI final dipasang di TASK 3.3.
+            composable(Screen.IkigaiReportLoading.route) {
+                IkigaiReportLoadingScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // Ikigai Report Display (TASK 3.3: tampilkan 4 lingkaran + laporan + rekomendasi).
+            composable(Screen.IkigaiReport.route) {
+                IkigaiReportScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    autoTriggerFromAssessment = true,
+                    onStartAssessment = {
+                        navController.navigate(Screen.IkigaiAssessment.route) {
+                            popUpTo(Screen.IkigaiReport.route) { inclusive = true }
+                        }
+                    },
                 )
             }
         }
