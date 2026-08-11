@@ -64,11 +64,10 @@ File lain (`AUDIT.md`, `TASKS_FASE2.md`, `Dokumen Teknis*.md`) = **referensi bac
 
 > Snapshot ini hanya untuk **referensi cepat**. Sumber kebenaran = tabel di `CHANGELOG.md`.
 
-**Sedang berjalan**: T-001 ✅ done (commit f4ee87e), T-001b ready (commit infra)
+**Sedang berjalan**: T-001b ✅ done (commits be78ba2, 4fb665b, a7d79a6, 6968673)
 
 **Next up** (urut, jangan loncat):
-1. **T-001b** — Commit orchestration docs + Edge Function infra (10 menit) ← **JALAN DULUAN**
-2. **T-002** — Sleep aggregation 2B commit (15–30 menit)
+1. **T-002** — Sleep aggregation 2B commit (15–30 menit)
 3. **T-003** — AI Chatbot wiring (FR-009, FR-011) — pakai Edge Function `test-gemini`/`hello`
 4. **T-004** — Dashboard integration final (FR-015) — gabung 2A + 2B + Ikigai progress
 5. **T-005** — Sleep Insight (FR-014) — butuh Gemini, baru bisa setelah T-003

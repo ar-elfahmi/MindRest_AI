@@ -94,4 +94,30 @@
 **Next blocker**: T-002 (commit sleep aggregation 2B) bisa jalan tanpa menunggu ini. Untuk T-003 yang test `generate-ikigai-report` end-to-end, perlu commit dulu: (a) `supabase/functions/_shared/cors.ts` + `_shared/prompts/ikigai.ts` (dependency fungsi), (b) `app/build.gradle.kts` + `gradle/libs.versions.toml` (catalog `supabase-functions`). Bisa di-handle di awal T-003 sebelum step Edge Function live test.
 ---
 
+### [2026-08-11 16:45] T-001b | agent: pi-coder | FR: INFRA
+**Goal**: Commit orchestration workflow docs + Edge Function infra + gradle catalog (mendukung FR-013 runtime test, FR-009, FR-014)
+**Files changed**: 16 files (2506 ins, 0 del) dalam 4 commit terpisah:
+- `be78ba2 chore(orchestration)`: CHANGELOG.md, ORCHESTRATION.md, TASKS/T-001..T-005.md (8 files, 1097 ins) — workflow source-of-truth
+- `4fb665b chore(supabase)`: supabase/functions/_shared/{cors.ts,prompts/ikigai.ts}, supabase/functions/README.md, supabase/functions/{hello,test-gemini}/index.ts, supabase/migrations/001_extend_profiles.sql (6 files, 1084 ins) — Edge Function infra + shared helpers
+- `a7d79a6 build(gradle)`: app/build.gradle.kts (+1 line `implementation(libs.supabase.functions)`), gradle/libs.versions.toml (+1 line `supabase-functions` catalog) (2 files, 2 ins) — Functions plugin
+- `6968673 docs`: task-2a-output.md, task-2c-output.md (2 files, 325 ins) — historical task outputs (opsional)
+**Acceptance**:
+- [✅] 4 commit terpisah sukses (3 wajib + 1 opsional historical)
+- [✅] `git status` bersih untuk file yang di-commit (sisa untracked = sleep/journal/schema/.env/dokumen proposal/build.bat = di luar scope T-001b)
+- [✅] `./gradlew assembleDebug` BUILD SUCCESSFUL setelah commit (38 tasks, semua UP-TO-DATE — configuration cache reused, karena `libs.supabase.functions` sudah dipakai di T-001 commit f4ee87e)
+- [✅] Gradle diff verified: hanya +1 line `implementation(libs.supabase.functions)` di `app/build.gradle.kts` dan +1 line `supabase-functions` catalog di `gradle/libs.versions.toml` — tidak ada perubahan tak terkait
+- [✅] Shared files verified exist: `supabase/functions/_shared/cors.ts` (295B), `_shared/prompts/ikigai.ts` (10.6K), `hello/index.ts` (1.1K), `test-gemini/index.ts` (7.8K), `migrations/001_extend_profiles.sql` (1.8K)
+- [✅] TIDAK ada file dari section "JANGAN commit" yang ikut ter-commit (dokumen proposal, build.bat, supabase/.temp/ — semua masih untracked)
+- [✅] CHANGELOG entry ditulis (entry ini)
+- [✅] ORCHESTRATION.md Live Status Board T-001b diupdate → ✅ done (commit f4ee87e...6968673)
+**Build**: ✅ sukses — `./gradlew assembleDebug` BUILD SUCCESSFUL in 1s, 38 actionable tasks (semua UP-TO-DATE, configuration cache reused)
+**Risks/Notes**:
+- JAVA_HOME tidak di-set di shell default; build berhasil setelah set manual ke `C:\Program Files\Android\Android Studio\jbr` (JBR 21.0.10). Tidak memengaruhi commit (cuma verifikasi lokal).
+- File `build.bat` masih untracked — perlu dicek isinya sebelum di-handle di task terpisah (di luar scope T-001b).
+- `supabase/.temp/` masih ada (folder sementara Supabase CLI) — sengaja di-ignore, tidak di-commit.
+- `ROADMAP.md`, `supabase/README.md`, `supabase/schema.sql`, `app/src/main/java/.../sleep/*`, `journal/*` masih modified — masuk T-002..T-005 sesuai Live Status Board.
+- `.env.example` masih modified (perubahan oleh agent sesi sebelumnya) — perlu review terpisah sebelum commit.
+**Next blocker**: T-002 (sleep aggregation commit) dan T-003 (AI chatbot wiring + Edge Function live test) sekarang bisa jalan tanpa menunggu — semua dependency ter-commit.
+---
+
 
