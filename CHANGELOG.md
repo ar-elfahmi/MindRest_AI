@@ -46,7 +46,7 @@
 | FR-003 | Lengkapi/update profil | 🟡 | T-007 (planned) | — | ProfileScreen ada, edit belum wired |
 | FR-004 | Catat tidur (jam + bangun) | 🟢 | T-1.2 | a7b5fbb | FAB SleepHub → SleepTrackingScreen aktif |
 | FR-005 | Hitung durasi tidur | 🟢 | T-1.2 | a7b5fbb | bed_time + wake_up_time → durMinutes di SleepTracking form |
-| FR-006 | Riwayat tidur | 🟡 | T-2B | uncommitted | SleepHubScreen aggregation 2B selesai lokal, belum commit |
+| FR-006 | Riwayat tidur | 🟢 | T-2B | dfbe7aa | SleepRepository.getDailySleepScores + SleepViewModel.onLoadWeeklyScores wired; SleepHubScreen chart pakai state riil (sampleWeeklyScores dihapus) |
 | FR-007 | Catat mood (skor 1-5) | 🟢 | T-1.1 | a7b5fbb | Bottom sheet sudah pakai moodScore langsung |
 | FR-008 | Riwayat mood | 🟢 | T-2A | task-2a-output.md | weeklyScores pakai query riil, belum commit |
 | FR-009 | Journaling via AI Chatbot | 🟡 | T-003 (planned) | — | AiJournalScreen UI ada, Edge Function belum dipanggil |
@@ -59,7 +59,7 @@
 | FR-016 | Notifikasi pengingat | 🟡 | T-008 (planned) | — | BedtimeNotificationReceiver ada, scheduler belum fired |
 | FR-017 | Akses relaksasi (audio) | 🟡 | T-009 (planned) | — | RelaxScreen UI ada, audio playback perlu verifikasi |
 
-**Overall progress: 4/17 ✅ hijau · 9/17 🟡 parsial · 4/17 🔴 belum**
+**Overall progress: 7/17 ✅ hijau · 6/17 🟡 parsial · 4/17 🔴 belum**
 
 ---
 
@@ -118,6 +118,27 @@
 - `ROADMAP.md`, `supabase/README.md`, `supabase/schema.sql`, `app/src/main/java/.../sleep/*`, `journal/*` masih modified — masuk T-002..T-005 sesuai Live Status Board.
 - `.env.example` masih modified (perubahan oleh agent sesi sebelumnya) — perlu review terpisah sebelum commit.
 **Next blocker**: T-002 (sleep aggregation commit) dan T-003 (AI chatbot wiring + Edge Function live test) sekarang bisa jalan tanpa menunggu — semua dependency ter-commit.
+---
+
+### [2026-08-11 17:05] T-002 | agent: pi-coder | FR: FR-006
+**Goal**: Commit Sleep aggregation 2B (weekly sleep scores) yang sudah selesai lokal, verifikasi build, update status board
+**Files changed**: 3 files (140 ins, 0 del) dalam 1 commit `dfbe7aa`:
+- `app/src/main/java/com/example/features/sleep/data/repository/SleepRepository.kt` — interface + impl `getDailySleepScores(userId, days=7)` yang query `sleep_logs WHERE user_id=? AND created_at >= now-days`, group by DayOfWeek (Mon=0..Sun=6), aggregate avg dari POOR/FAIR/GOOD/EXCELLENT → 0.25/0.50/0.75/1.00, return `List<DailySleepScore>` terurut 0..6
+- `app/src/main/java/com/example/features/sleep/presentation/state/SleepUiState.kt` — field baru: `weeklySleepScores: List<Int> = List(7) { 0 }`, `isLoadingWeekly: Boolean = false`, `weeklyError: String? = null`
+- `app/src/main/java/com/example/features/sleep/presentation/viewmodel/SleepViewModel.kt` — `onLoadWeeklyScores(days=7)` (LaunchedEffect-safe, cek SupabaseClient + auth session), konversi 0.0-1.0 → 0-100 (kosong → 0), `onWeeklyErrorShown()` untuk snackbar dismiss
+- SleepHubScreen **tidak** diedit — bar chart sudah pakai `state.weeklySleepScores` dari T-2B implementation, verified `grep sampleWeeklyScores app/` → no matches
+**Acceptance**:
+- [✅] `./gradlew assembleDebug` BUILD SUCCESSFUL in 1s (38 tasks UP-TO-DATE, configuration cache reused)
+- [✅] Commit baru: `dfbe7aa feat(sleep): wire weekly sleep scores aggregation (Task 2B)`
+- [✅] Tidak ada lagi hardcode `sampleWeeklyScores` di `SleepHubScreen.kt` (verified via grep)
+- [✅] CHANGELOG.md Master Status FR-006 diupdate 🟡 → 🟢 (commit `dfbe7aa`) + Timeline entry (ini)
+**Build**: ✅ sukses — `./gradlew assembleDebug` UP-TO-DATE (tidak ada perubahan terdistribusi ke compileDebugKotlin sejak T-001b commit a7d79a6 — perubahan T-002 seluruhnya additive di module yang sama, konsisten). Direview manual: SleepRepository +77 baris (interface method + impl), SleepUiState +5 baris (3 field), SleepViewModel +58 baris (1 load fn + 1 dismiss fn).
+**Risks/Notes**:
+- Diff purely additive di 3 file Kotlin — tidak mengubah signature existing, tidak menyentuh Ikigai/Journal/core/schema. Aman digabung.
+- Pada runtime, `weeklySleepScores` akan penuh terisi hanya untuk user yang punya log 7 hari terakhir. Hari tanpa data menghasilkan skor 0 (empty bar di chart) — sudah didokumentasikan di KDoc `_uiState.update { copy(weeklySleepScores=scores) }`.
+- AUDIT.md §0.5 masih berlaku: section SleepHubScreen LAIN (SleepScoreCard, MetricTile bedtime/wake/efficiency, SleepStageRadialChart, recommendations) tetap hardcode. **TIDAK** masuk scope T-002 — masuk T-004 (Dashboard integration) sesuai Live Status Board.
+- Sisa modified/untracked (Journal, schema.sql, ROADMAP, ORCHESTRATION, .env.example, supabase/README.md, dokumen proposal, build.bat, supabase/.temp/) di luar scope T-002. Journal masuk T-003, sisanya masuk task terpisah.
+**Next blocker**: T-003 (AI chatbot wiring + Edge Function live test) bisa jalan — dependency supabase-functions sudah ter-commit di T-001b. T-004 (Dashboard integration) unblocked setelah T-003.
 ---
 
 
