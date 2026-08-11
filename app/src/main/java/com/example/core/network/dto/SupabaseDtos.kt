@@ -5,8 +5,15 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class JournalEntryInsert(
+    @SerialName("id") val id: String? = null,
     @SerialName("user_id") val userId: String,
-    @SerialName("content") val content: String
+    @SerialName("content") val content: String,
+    // T-003: kolom baru untuk chat history. Opsional (legacy full-entry
+    // tidak pakai). Default null di JSON agar backward-compatible dengan
+    // baris lama yang belum punya kolom ini.
+    @SerialName("session_id") val sessionId: String? = null,
+    @SerialName("role") val role: String? = null,
+    @SerialName("parent_id") val parentId: String? = null,
 )
 
 @Serializable
@@ -52,4 +59,9 @@ data class JournalEntryRow(
     @SerialName("user_id") val userId: String,
     @SerialName("content") val content: String,
     @SerialName("created_at") val createdAt: String,
+    // T-003: kolom baru untuk chat history. Nullable agar decode tetap
+    // bekerja untuk baris lama (legacy full-entry).
+    @SerialName("session_id") val sessionId: String? = null,
+    @SerialName("role") val role: String? = null,
+    @SerialName("parent_id") val parentId: String? = null,
 )

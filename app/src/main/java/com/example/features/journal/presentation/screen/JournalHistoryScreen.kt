@@ -45,11 +45,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.designsystem.MindRestTheme
 import com.example.core.network.dto.JournalEntryRow
 import com.example.features.journal.presentation.viewmodel.JournalViewModel
+import com.example.features.mood.presentation.viewmodel.MoodViewModel
+import java.time.LocalDate
+import java.time.DayOfWeek
 
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.IconButton
@@ -61,11 +65,17 @@ fun JournalHistoryScreen(
     onStartNewSessionClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: JournalViewModel = viewModel(),
+    // TASK 2C: sumber data riil untuk WeeklyMoodTimeline.
+    moodViewModel: MoodViewModel = viewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    val moodState by moodViewModel.uiState.collectAsState()
 
-    // Auto-load history setiap kali screen dibuka.
-    LaunchedEffect(Unit) { viewModel.onLoadHistory() }
+    // Auto-load history + mood mingguan setiap kali screen dibuka.
+    LaunchedEffect(Unit) {
+        viewModel.onLoadHistory()
+        moodViewModel.onLoadWeeklyScores()
+    }
 
     val entries = state.recentEntries.map { it.toJournalEntryData() }
 
@@ -114,7 +124,12 @@ fun JournalHistoryScreen(
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
             item {
-                WeeklyMoodTimeline(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp))
+                WeeklyMoodTimeline(
+                    scores = moodState.weeklyMoodScores,
+                    isLoading = moodState.isLoadingWeekly,
+                    todayIndex = todayDayIndex(),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Sesi Sebelumnya",
@@ -213,11 +228,32 @@ private fun formatIsoTimestamp(iso: String): String {
     }
 }
 
+/**
+ * Timeline mood 7 hari (Senin..Minggu).
+ *
+ * TASK 2C: emoji diturunkan dari skor 0–100 (Mon=index 0, Sun=index 6) yang
+ * di-load oleh [MoodViewModel.onLoadWeeklyScores]. Hari tanpa data (skor 0)
+ * ditampilkan sebagai placeholder "-" dengan latar diredupkan.
+ *
+ * @param scores 7 elemen, range 0..100, urutan Senin..Minggu.
+ * @param isLoading tampilkan spinner kecil menggantikan emoji bila true.
+ * @param todayIndex 0..6 untuk highlight border hari ini. Default Sabtu (5)
+ *   dipertahankan dari versi lama supaya preview tidak kosong.
+ */
 @Composable
-private fun WeeklyMoodTimeline(modifier: Modifier = Modifier) {
+private fun WeeklyMoodTimeline(
+    scores: List<Int>,
+    isLoading: Boolean = false,
+    todayIndex: Int = 5,
+    modifier: Modifier = Modifier
+) {
     val days = listOf("S", "S", "R", "K", "J", "S", "M")
-    val emojis = listOf("😊", "😐", "😔", "😫", "😊", "😊", "")
-    val todayIndex = 5 // Suppose today is Saturday
+    val padded = remember(scores) {
+        // Pastikan selalu 7 elemen untuk layout stabil.
+        List(7) { idx -> scores.getOrNull(idx) ?: 0 }
+    }
+    val emojis = remember(padded) { padded.map { scoreToEmoji(it) } }
+    val hasAnyData = padded.any { it > 0 }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -231,48 +267,103 @@ private fun WeeklyMoodTimeline(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .padding(bottom = 12.dp)
         )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            days.forEachIndexed { index, day ->
-                val isToday = index == todayIndex
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                ) {
-                    Text(
-                        text = day,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
-                        ),
-                        color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(
+        if (isLoading) {
+            // Loading skeleton: spinner di tengah, layout tetap.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                days.forEachIndexed { index, day ->
+                    val isToday = index == todayIndex
+                    val hasScore = padded[index] > 0
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .size(36.dp)
-                            .border(
-                                width = if (isToday) 2.dp else 0.dp,
-                                color = if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                shape = CircleShape
-                            )
-                            .clip(CircleShape)
-                            .background(
-                                if (emojis[index].isEmpty()) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) 
-                                else MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                        contentAlignment = Alignment.Center
                     ) {
-                        if (emojis[index].isNotEmpty()) {
-                            Text(text = emojis[index], style = MaterialTheme.typography.bodyLarge)
-                        } else {
-                            Text(text = "-", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            text = day,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
+                            ),
+                            color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(
+                                    width = if (isToday) 2.dp else 0.dp,
+                                    color = if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    shape = CircleShape
+                                )
+                                .clip(CircleShape)
+                                .background(
+                                    if (!hasScore) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (hasScore) {
+                                Text(text = emojis[index], style = MaterialTheme.typography.bodyLarge)
+                            } else {
+                                Text(
+                                    text = "·",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
                         }
                     }
                 }
             }
+            if (!hasAnyData) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Belum ada data mood minggu ini.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
+    }
+}
+
+/** Map skor 0–100 → emoji. Skor 0 = placeholder (ditangani caller dengan `-`/`·`). */
+private fun scoreToEmoji(score: Int): String = when {
+    score <= 0 -> "·"
+    score <= 20 -> "😔"
+    score <= 40 -> "😕"
+    score <= 60 -> "😐"
+    score <= 80 -> "🙂"
+    else -> "😊"
+}
+
+/** Index hari ini (0=Senin .. 6=Minggu) untuk highlight border pada timeline. */
+private fun todayDayIndex(): Int {
+    val dow = LocalDate.now().dayOfWeek
+    return when (dow) {
+        DayOfWeek.MONDAY -> 0
+        DayOfWeek.TUESDAY -> 1
+        DayOfWeek.WEDNESDAY -> 2
+        DayOfWeek.THURSDAY -> 3
+        DayOfWeek.FRIDAY -> 4
+        DayOfWeek.SATURDAY -> 5
+        DayOfWeek.SUNDAY -> 6
+        else -> 5
     }
 }
 
