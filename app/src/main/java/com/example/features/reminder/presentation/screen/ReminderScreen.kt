@@ -14,10 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,23 +25,44 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.designsystem.*
 import com.example.core.designsystem.components.*
 import com.example.features.reminder.BedtimeNotificationHelper
+import com.example.features.reminder.presentation.viewmodel.ReminderViewModel
+import kotlin.math.max
+import kotlin.math.min
 
+/**
+ * ReminderScreen — T-009 (FR-016).
+ *
+ * Scoping per task T-009:
+ *  - **Bedtime reminder card** (top): TimePicker (jam + menit) + Save/Cancel
+ *    buttons + current state display. Wiring ke [ReminderViewModel]
+ *    → DataStore → [BedtimeNotificationHelper].
+ *  - **Permission flow**: POST_NOTIFICATIONS launcher (API 33+).
+ *  - **Routine reminders card** (bottom): toggle UI-only, JANGAN di-schedule —
+ *    di luar scope T-009 (saat ini hanya render hardcoded copy, fungsionalitas
+ *    scheduling belum jadi FR terpisah).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderScreen(
     onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ReminderViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val state by viewModel.uiState.collectAsState()
 
-    var isBedtimeReminderEnabled by remember { mutableStateOf(true) }
+    // Existing daily-routine toggles tetap `remember`-only (offline,
+    // belum terhubung ke alarm — di luar scope T-009).
     var isMorningCheckInEnabled by remember { mutableStateOf(true) }
     var isMiddayResetEnabled by remember { mutableStateOf(false) }
     var isEveningJournalEnabled by remember { mutableStateOf(true) }
@@ -71,15 +92,6 @@ fun ReminderScreen(
         }
     }
 
-    // Schedule notification when enabled
-    LaunchedEffect(isBedtimeReminderEnabled) {
-        if (isBedtimeReminderEnabled) {
-            BedtimeNotificationHelper.scheduleBedtimeNotification(context)
-        } else {
-            BedtimeNotificationHelper.cancelBedtimeNotification(context)
-        }
-    }
-
     Scaffold(
         topBar = {
             TopBar(
@@ -98,7 +110,7 @@ fun ReminderScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Permission Banner if Android 13+ and not granted
+            // Permission Banner (Android 13+ only)
             if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 BaseCard(
                     radius = 16.dp,
@@ -138,13 +150,14 @@ fun ReminderScreen(
                 }
             }
 
-            // 1. Bedtime Wind-Down Notification Scheduler Card
+            // === 1. Bedtime Wind-Down Notification Card ===
             BaseCard(
                 radius = 20.dp,
                 padding = 16.dp,
                 testTag = "bedtime_scheduler_card"
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    // Header
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -182,21 +195,72 @@ fun ReminderScreen(
                             }
                         }
 
-                        Switch(
-                            checked = isBedtimeReminderEnabled,
-                            onCheckedChange = { enabled ->
-                                isBedtimeReminderEnabled = enabled
-                                if (enabled && !hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                            },
-                            modifier = Modifier.testTag("bedtime_switch")
-                        )
+                        // Status badge
+                        if (state.isEnabled) {
+                            Badge(
+                                text = "Aktif",
+                                color = SuccessColor,
+                                backgroundColor = SuccessColor.copy(alpha = 0.15f)
+                            )
+                        } else {
+                            Badge(
+                                text = "Nonaktif",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                            )
+                        }
                     }
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-                    // Schedule Breakdown Info
+                    // Time picker (jam + menit)
+                    Text(
+                        text = "Waktu Tidur Ideal",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    TimeStepperRow(
+                        hour = state.hour,
+                        minute = state.minute,
+                        onHourChange = viewModel::onHourChange,
+                        onMinuteChange = viewModel::onMinuteChange,
+                        modifier = Modifier.fillMaxWidth().testTag("time_stepper_row")
+                    )
+
+                    // Action buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        PrimaryButton(
+                            text = "Simpan Pengingat",
+                            onClick = {
+                                if (!hasNotificationPermission &&
+                                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                                ) {
+                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.setReminderTime(state.hour, state.minute)
+                                    Toast.makeText(context, "Pengingat disimpan.", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.weight(1f).testTag("save_reminder_btn")
+                        )
+                        if (state.isEnabled) {
+                            SecondaryButton(
+                                text = "Matikan",
+                                onClick = {
+                                    viewModel.cancelReminder()
+                                    Toast.makeText(context, "Pengingat dimatikan.", Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier.weight(1f).testTag("cancel_reminder_btn")
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                    // Schedule breakdown (read-only)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -209,7 +273,7 @@ fun ReminderScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "11:15 PM",
+                                text = formatTime(state.hour, state.minute),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -223,18 +287,22 @@ fun ReminderScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = if (isBedtimeReminderEnabled) "10:45 PM Daily" else "Disabled",
+                                text = if (state.isEnabled) {
+                                    "${formatTime(state.hour, state.minute, subtractMinutes = 30)} Daily"
+                                } else {
+                                    "Disabled"
+                                },
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
-                                color = if (isBedtimeReminderEnabled) SuccessColor else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = if (state.isEnabled) SuccessColor else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
-                    // Status Chip
-                    if (isBedtimeReminderEnabled) {
+                    // Status Chip (when enabled)
+                    if (state.isEnabled) {
                         Badge(
-                            text = "⏰ Active: Alarm scheduled at 10:45 PM daily",
+                            text = "⏰ Active: Alarm scheduled ${formatTime(state.hour, state.minute, subtractMinutes = 30)} daily",
                             color = SuccessColor,
                             backgroundColor = SuccessColor.copy(alpha = 0.15f)
                         )
@@ -244,7 +312,9 @@ fun ReminderScreen(
                     SecondaryButton(
                         text = "Trigger Test Notification Now",
                         onClick = {
-                            if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            if (!hasNotificationPermission &&
+                                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                            ) {
                                 permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                             } else {
                                 BedtimeNotificationHelper.triggerTestNotification(context)
@@ -256,7 +326,7 @@ fun ReminderScreen(
                 }
             }
 
-            // 2. Additional Mindful Routine Reminders
+            // === 2. Additional Mindful Routine Reminders (out of scope T-009) ===
             BaseCard(
                 radius = 20.dp,
                 padding = 16.dp,
@@ -293,6 +363,129 @@ fun ReminderScreen(
             }
         }
     }
+}
+
+/**
+ * Compact hour + minute stepper (Material3).
+ * Menggunakan IconButton +/- (instead of full TimePicker wheel) supaya
+ * card tidak terlalu tinggi (inline-scrollable). Pola paralel dengan
+ * existing design system.
+ */
+@Composable
+private fun TimeStepperRow(
+    hour: Int,
+    minute: Int,
+    onHourChange: (Int) -> Unit,
+    onMinuteChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Jam
+        TimeStepperColumn(
+            label = "Jam",
+            value = hour,
+            onIncrement = { onHourChange((hour + 1) % 24) },
+            onDecrement = { onHourChange((hour + 23) % 24) },
+            modifier = Modifier.weight(1f).testTag("hour_stepper")
+        )
+
+        // Colon separator
+        Text(
+            text = ":",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        // Menit
+        TimeStepperColumn(
+            label = "Menit",
+            value = minute,
+            onIncrement = { onMinuteChange(min(minute + 1, 59)) },
+            onDecrement = { onMinuteChange(max(minute - 1, 0)) },
+            modifier = Modifier.weight(1f).testTag("minute_stepper")
+        )
+    }
+}
+
+@Composable
+private fun TimeStepperColumn(
+    label: String,
+    value: Int,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        // Up button
+        IconButton(
+            onClick = onIncrement,
+            modifier = Modifier
+                .size(36.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(50)
+                )
+                .testTag("${label}_up")
+        ) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowUp,
+                contentDescription = "Tambah $label"
+            )
+        }
+        // Value display
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+            modifier = Modifier.fillMaxWidth().height(48.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                Text(
+                    text = "%02d".format(value),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        // Down button
+        IconButton(
+            onClick = onDecrement,
+            modifier = Modifier
+                .size(36.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(50)
+                )
+                .testTag("${label}_down")
+        ) {
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Kurangi $label"
+            )
+        }
+    }
+}
+
+/** Format integer hour:minute ke "22:15" (24h). */
+private fun formatTime(hour: Int, minute: Int, subtractMinutes: Int = 0): String {
+    var h = hour
+    var m = minute - subtractMinutes
+    if (m < 0) {
+        m += 60
+        h = (h - 1 + 24) % 24
+    }
+    return "%02d:%02d".format(h, m)
 }
 
 @Preview(showBackground = true)
