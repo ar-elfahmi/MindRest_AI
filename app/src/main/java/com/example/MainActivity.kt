@@ -234,7 +234,12 @@ fun MainApp(
                     onMoodSelected = { _ -> },
                     onNavigateToLifestyle = { navController.navigate(Screen.Lifestyle.route) },
                     onNavigateToReminder = { navController.navigate(Screen.Reminder.route) },
-                    onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) }
+                    onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) },
+                    // T-004 (FR-015): wiring callback untuk widget Ikigai Progress.
+                    // Empty state CTA → onNavigateToIkigaiAssessment.
+                    // Filled state CTA → onNavigateToIkigaiReport (lihat laporan terbaru).
+                    onNavigateToIkigaiAssessment = { navController.navigate(Screen.IkigaiAssessment.route) },
+                    onNavigateToIkigaiReport = { navController.navigate(Screen.IkigaiReport.route) },
                 )
             }
 

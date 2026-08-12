@@ -50,6 +50,7 @@ import com.example.core.designsystem.NumberM
 import com.example.core.designsystem.NumberS
 import com.example.core.designsystem.NumberXl
 import com.example.core.designsystem.components.*
+import com.example.features.home.presentation.viewmodel.HomeViewModel
 import com.example.features.mood.presentation.viewmodel.MoodViewModel
 import com.example.features.sleep.presentation.viewmodel.SleepViewModel
 
@@ -77,9 +78,18 @@ fun HomeScreen(
     onNavigateToLifestyle: () -> Unit = {},
     onNavigateToReminder: () -> Unit = {},
     onNavigateToStatistics: () -> Unit = {},
+    // T-004 (FR-015): callback baru untuk widget Ikigai Progress.
+    // Empty state → onNavigateToIkigaiAssessment.
+    // Filled state → onNavigateToIkigaiReport.
+    onNavigateToIkigaiAssessment: () -> Unit = {},
+    onNavigateToIkigaiReport: () -> Unit = {},
     modifier: Modifier = Modifier,
     moodViewModel: MoodViewModel = viewModel(),
     sleepViewModel: SleepViewModel = viewModel(),
+    // T-004 (FR-015): VM baru khusus widget Ikigai Progress + Sleep Insight preview.
+    // Mood/sleep weekly aggregation TETAP di MoodViewModel/SleepViewModel (sesuai
+    // scope T-2A/T-2B + "DON'T Touch" T-004).
+    homeViewModel: HomeViewModel = viewModel(),
 ) {
     // Local state for bottom sheet
     var showCheckInSheet by remember { mutableStateOf(false) }
@@ -89,6 +99,9 @@ fun HomeScreen(
 
     val moodUiState by moodViewModel.uiState.collectAsState()
 
+    // T-004 (FR-015): state untuk widget Ikigai Progress + Sleep Insight preview.
+    val homeUiState by homeViewModel.uiState.collectAsState()
+
     // "Sudah check-in hari ini" ditentukan oleh DB via MoodUiState.todayMoodScore
     // (single source of truth — survive recompose/restart/tab switch).
     val hasCheckedInToday = moodUiState.todayMoodScore != null
@@ -97,6 +110,14 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         moodViewModel.onLoadWeeklyScores()
         moodViewModel.onLoadTodayMood()
+    }
+
+    // T-004 (FR-015): load Ikigai Progress count + Sleep Insight preview.
+    // onLoadSleepInsightPreview() saat ini hanya reset state (placeholder);
+    // real Gemini-generated preview menyusul T-005 / FR-014.
+    LaunchedEffect(Unit) {
+        homeViewModel.onLoadIkigaiAssessmentCount()
+        homeViewModel.onLoadSleepInsightPreview()
     }
 
     // Tampilkan error snackbar bila insert mood/tidur gagal.
@@ -122,6 +143,19 @@ fun HomeScreen(
             state.weeklyError?.let {
                 snackbarHostState.showSnackbar("Mood mingguan: $it")
                 moodViewModel.onWeeklyErrorShown()
+            }
+        }
+    }
+    // T-004 (FR-015): snackbar untuk error Ikigai Progress / Sleep Insight preview.
+    LaunchedEffect(Unit) {
+        homeViewModel.uiState.collect { state ->
+            state.ikigaiError?.let {
+                snackbarHostState.showSnackbar("Ikigai: $it")
+                homeViewModel.onIkigaiErrorShown()
+            }
+            state.sleepInsightError?.let {
+                snackbarHostState.showSnackbar("Sleep Insight: $it")
+                homeViewModel.onSleepInsightErrorShown()
             }
         }
     }
@@ -252,6 +286,19 @@ fun HomeScreen(
                 onNavigateToIkigai = onNavigateToIkigai
             )
 
+            // 4b. IKIGAI PROGRESS WIDGET (T-004 / FR-015)
+            // Sumber data: HomeUiState.ikigaiAssessmentCount (query count via
+            // IkigaiRepository.getAssessmentCount). Empty state saat count == 0
+            // menampilkan CTA "Mulai Ikigai Assessment" → onNavigateToIkigaiAssessment.
+            // Filled state menampilkan "Lihat Laporan" + badge "X assessment"
+            // → onNavigateToIkigaiReport.
+            IkigaiProgressCard(
+                assessmentCount = homeUiState.ikigaiAssessmentCount,
+                isLoading = homeUiState.isLoadingIkigai,
+                onStartAssessment = onNavigateToIkigaiAssessment,
+                onViewReport = onNavigateToIkigaiReport,
+            )
+
             // 5. WEEKLY SLEEP CHART CARD (TASK 2A: skor di-drive oleh mood mingguan
             //    dari MoodViewModel; rename kartu dan sumber data akan dirapikan
             //    saat TASK 3A dieksekusi.)
@@ -261,10 +308,13 @@ fun HomeScreen(
                 onClick = onNavigateToStatistics
             )
 
-            // 6. AI SLEEP INSIGHTS CARD
+            // 6. AI SLEEP INSIGHTS CARD (T-004 / FR-015)
+            // State binding: insightText dari HomeUiState.sleepInsightPreview.
+            // null = belum ada insight (T-005 / FR-014 akan isi teks riil via
+            // Gemini Edge Function). Saat ini placeholder null → empty state.
             AISleepInsightsCard(
-                insightText = "Your sleep quality improved by 12% this week. Try reducing screen time 1 hour before bed for even better results.",
-                onSeeAllClick = onNavigateToRecommendations
+                insightText = homeUiState.sleepInsightPreview,
+                onSeeAllClick = onNavigateToRecommendations,
             )
 
             // 7. TODAY'S REMINDERS CARD
@@ -712,10 +762,15 @@ private fun WeeklySleepBarChartCanvas(
 
 /**
  * 6. AI SLEEP INSIGHTS CARD Component
+ *
+ * T-004 (FR-015): `insightText` nullable — null = belum ada insight
+ * (T-005 / FR-014 akan isi dari pola tidur 7 hari via Gemini Edge Function).
+ * Saat null, tampilkan empty state hint + CTA "Lihat tidur 7 hari" (route
+ * ke Statistik atau SleepHub).
  */
 @Composable
 private fun AISleepInsightsCard(
-    insightText: String,
+    insightText: String?,
     onSeeAllClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -771,12 +826,22 @@ private fun AISleepInsightsCard(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = insightText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            lineHeight = 20.sp
-        )
+        // T-004: render real insight text, atau empty state "Belum ada".
+        if (insightText.isNullOrBlank()) {
+            Text(
+                text = "Insight belum tersedia. Tambah log tidur 7 hari untuk mendapat insight personal.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 20.sp,
+            )
+        } else {
+            Text(
+                text = insightText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 20.sp,
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
         PrimaryButton(
             text = "See All AI Recommendations",
@@ -784,6 +849,80 @@ private fun AISleepInsightsCard(
             modifier = Modifier.fillMaxWidth(),
             testTag = "see_all_ai_recommendations_btn"
         )
+    }
+}
+
+/**
+ * 4b. IKIGAI PROGRESS CARD (T-004 / FR-015).
+ *
+ * Menampilkan status Ikigai user:
+ * - Empty state (assessmentCount == 0): CTA "Mulai Ikigai Assessment"
+ *   → onStartAssessment (navigate ke Screen.IkigaiAssessment).
+ * - Filled state (assessmentCount >= 1): ringkasan "X assessment selesai"
+ *   + badge "X assessment" + CTA "Lihat Laporan" → onViewReport (navigate
+ *   ke Screen.IkigaiReport atau Screen.Ikigai dashboard).
+ *
+ * Sumber data: HomeUiState.ikigaiAssessmentCount (state-only, query count
+ * dilakukan di HomeViewModel agar UI tetap simpel).
+ */
+@Composable
+private fun IkigaiProgressCard(
+    assessmentCount: Int,
+    isLoading: Boolean,
+    onStartAssessment: () -> Unit,
+    onViewReport: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    BaseCard(
+        modifier = modifier.fillMaxWidth(),
+        radius = 16.dp,
+        padding = 16.dp,
+        testTag = "ikigai_progress_card",
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                SectionLabel(text = "IKIGAI PROGRESS", modifier = Modifier.padding(bottom = 4.dp))
+                Text(
+                    text = when {
+                        isLoading -> "Memuat..."
+                        assessmentCount == 0 -> "Kamu belum pernah assessment Ikigai."
+                        assessmentCount == 1 -> "1 assessment selesai."
+                        else -> "$assessmentCount assessment selesai."
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            if (assessmentCount > 0) {
+                Badge(
+                    text = if (assessmentCount == 1) "1 assessment" else "$assessmentCount assessments",
+                    color = MaterialTheme.colorScheme.primary,
+                    backgroundColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f),
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        if (assessmentCount == 0) {
+            PrimaryButton(
+                text = "Mulai Ikigai Assessment",
+                onClick = onStartAssessment,
+                modifier = Modifier.fillMaxWidth(),
+                testTag = "ikigai_start_assessment_btn",
+            )
+        } else {
+            PrimaryButton(
+                text = "Lihat Laporan",
+                onClick = onViewReport,
+                modifier = Modifier.fillMaxWidth(),
+                testTag = "ikigai_view_report_btn",
+            )
+        }
     }
 }
 
