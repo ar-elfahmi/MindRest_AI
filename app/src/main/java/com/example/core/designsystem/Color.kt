@@ -37,3 +37,9 @@ val FeatureJournaling = Color(0xFF60A5FA)
 val FeatureRelaxation = Color(0xFF34D399)
 val FeatureLifestyle = Color(0xFFFB923C)
 val FeatureReminder = Color(0xFFA78BFA)
+
+// Sleep Score hero gradient (brand) — reused by HomeScreen SleepScoreHeroCard.
+val SleepHeroDarkStart = Color(0xFF1A1040)
+val SleepHeroDarkEnd = Color(0xFF0D1A2E)
+val SleepHeroLightStart = Color(0xFFEDE9FD)
+val SleepHeroLightEnd = Color(0xFFE0F2FE)

@@ -41,14 +41,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import com.example.core.designsystem.DarkAccent
+import com.example.core.designsystem.DarkBackground
 import com.example.core.designsystem.DisplayFontFamily
 import com.example.core.designsystem.FeatureJournaling
 import com.example.core.designsystem.FeatureJourney
 import com.example.core.designsystem.FeatureRelaxation
+import com.example.core.designsystem.LightAccent
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
 import com.example.core.designsystem.NumberM
 import com.example.core.designsystem.NumberS
 import com.example.core.designsystem.NumberXl
+import com.example.core.designsystem.SleepHeroDarkEnd
+import com.example.core.designsystem.SleepHeroDarkStart
+import com.example.core.designsystem.SleepHeroLightEnd
+import com.example.core.designsystem.SleepHeroLightStart
+import com.example.core.designsystem.SuccessColor
 import com.example.core.designsystem.components.*
 import com.example.features.home.presentation.viewmodel.HomeViewModel
 import com.example.features.mood.presentation.viewmodel.MoodViewModel
@@ -172,7 +181,10 @@ fun HomeScreen(
 
     val isDark = MaterialTheme.colorScheme.background.red < 0.5f
 
-    Box(modifier = modifier.fillMaxSize()) {
+    val spacing = LocalSpacing.current
+
+    AppScaffold(modifier = modifier) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -193,9 +205,9 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .screenEdge()
+                .padding(bottom = spacing.space6),
+            verticalArrangement = Arrangement.spacedBy(spacing.space4),
             horizontalAlignment = Alignment.Start
         ) {
             // 2. SLEEP SCORE HERO CARD & SLEEP INPUT
@@ -215,13 +227,13 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .clickable { showCheckInSheet = true }
                         .testTag("daily_checkin_trigger_card"),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(spacing.space4),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(spacing.space4),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -239,7 +251,7 @@ fun HomeScreen(
                     text = "Terima kasih sudah check-in hari ini ✨",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = 8.dp)
+                    modifier = Modifier.align(Alignment.CenterHorizontally).padding(vertical = spacing.space2)
                 )
             }
 
@@ -251,7 +263,7 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .clickable { onNavigateToMoodTracking() }
                     .testTag("mood_detail_card"),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(spacing.space4),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 )
@@ -259,7 +271,7 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(spacing.space4),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -334,9 +346,10 @@ fun HomeScreen(
         hostState = snackbarHostState,
         modifier = Modifier
             .align(Alignment.BottomCenter)
-            .padding(bottom = 80.dp)
+            .padding(bottom = spacing.space20)
     )
 }
+    }
 
 if (showCheckInSheet) {
         DailyCheckInBottomSheet(
@@ -387,8 +400,10 @@ private fun HeaderSection(
     isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
+
     val headerGradient = if (isDark) {
-        Brush.verticalGradient(colors = listOf(Color(0xFF090C1A), Color.Transparent))
+        Brush.verticalGradient(colors = listOf(DarkBackground, Color.Transparent))
     } else {
         Brush.verticalGradient(colors = listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.background))
     }
@@ -397,8 +412,8 @@ private fun HeaderSection(
         modifier = modifier
             .fillMaxWidth()
             .background(headerGradient)
-            .padding(horizontal = 20.dp)
-            .padding(top = 20.dp, bottom = 12.dp)
+            .screenEdge()
+            .padding(top = spacing.space5, bottom = spacing.componentGap)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -426,14 +441,14 @@ private fun HeaderSection(
             }
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(spacing.space2),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Notification Button with red unread badge dot
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(spacing.space3))
                         .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f))
                         .clickable(onClick = onNotificationClick)
                         .testTag("notification_button"),
@@ -449,10 +464,10 @@ private fun HeaderSection(
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(top = 6.dp, end = 6.dp)
+                            .padding(top = spacing.space2, end = spacing.space2)
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(Color.Red)
+                            .background(MaterialTheme.colorScheme.error)
                             .border(1.dp, MaterialTheme.colorScheme.background, CircleShape)
                             .testTag("notification_unread_dot")
                     )
@@ -462,7 +477,7 @@ private fun HeaderSection(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(spacing.space3))
                         .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f))
                         .clickable(onClick = onSettingsClick)
                         .testTag("settings_button"),
@@ -493,20 +508,22 @@ private fun SleepScoreHeroCard(
     isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
+
     val sleepCardGradient = if (isDark) {
-        Brush.linearGradient(colors = listOf(Color(0xFF1A1040), Color(0xFF0D1A2E)))
+        Brush.linearGradient(colors = listOf(SleepHeroDarkStart, SleepHeroDarkEnd))
     } else {
-        Brush.linearGradient(colors = listOf(Color(0xFFEDE9FD), Color(0xFFE0F2FE)))
+        Brush.linearGradient(colors = listOf(SleepHeroLightStart, SleepHeroLightEnd))
     }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(spacing.space6))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(spacing.space6))
             .background(sleepCardGradient)
             .clickable(onClick = onLogSleepClick)
-            .padding(20.dp)
+            .padding(spacing.space5)
             .testTag("sleep_score_hero_card")
     ) {
         Row(
@@ -529,7 +546,7 @@ private fun SleepScoreHeroCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(spacing.space1))
                 Row(
                     verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.Start
@@ -546,10 +563,10 @@ private fun SleepScoreHeroCard(
                         style = NumberM.copy(
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         ),
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        modifier = Modifier.padding(bottom = spacing.space2)
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(spacing.space1))
                 Text(
                     text = buildAnnotatedString {
                         append("You slept ")
@@ -561,26 +578,26 @@ private fun SleepScoreHeroCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.space2))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.space1)
                 ) {
                     Icon(
                         imageVector = Icons.Default.TrendingUp,
                         contentDescription = null,
-                        tint = if (isDark) Color(0xFF4ECDC4) else Color(0xFFEB845C),
+                        tint = if (isDark) DarkAccent else LightAccent,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
                         text = "↗ $trendText",
                         style = NumberS.copy(
-                            color = if (isDark) Color(0xFF4ECDC4) else Color(0xFFEB845C)
+                            color = if (isDark) DarkAccent else LightAccent
                         )
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(spacing.space4))
             ProgressRing(
                 progress = score / 100f,
                 size = 88.dp,
@@ -603,13 +620,15 @@ private fun QuickActionsRow(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+        val spacing = LocalSpacing.current
+
         SectionLabel(
             text = "QUICK ACTIONS",
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = spacing.space2)
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(spacing.componentGap)
         ) {
             QuickActionTile(
                 label = "Journal",
@@ -653,23 +672,23 @@ private fun WeeklySleepChartCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
+
     BaseCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        radius = 16.dp,
-        padding = 16.dp,
         testTag = "weekly_sleep_chart_card"
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .padding(bottom = spacing.space4),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                SectionLabel(text = "WEEKLY SLEEP", modifier = Modifier.padding(bottom = 0.dp))
+                SectionLabel(text = "WEEKLY SLEEP")
                 Text(
                     text = avgText,
                     style = MaterialTheme.typography.bodyMedium,
@@ -684,12 +703,12 @@ private fun WeeklySleepChartCard(
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = spacing.space2)
                 )
                 Badge(
                     text = "↑ Good",
-                    color = Color(0xFF34C98A),
-                    backgroundColor = Color(0xFF34C98A).copy(alpha = 0.15f)
+                    color = SuccessColor,
+                    backgroundColor = SuccessColor.copy(alpha = 0.15f)
                 )
             }
         }
@@ -712,6 +731,7 @@ private fun WeeklySleepBarChartCanvas(
     val primaryColor = MaterialTheme.colorScheme.primary
     val mutedColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+    val spacing = LocalSpacing.current
 
     Column(modifier = modifier.fillMaxWidth()) {
         Canvas(
@@ -744,7 +764,7 @@ private fun WeeklySleepBarChartCanvas(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(spacing.space2))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
@@ -775,30 +795,31 @@ private fun AISleepInsightsCard(
     modifier: Modifier = Modifier
 ) {
     var isExplanationExpanded by remember { mutableStateOf(false) }
+    val spacing = LocalSpacing.current
 
     BaseCard(
         modifier = modifier.fillMaxWidth(),
-        radius = 20.dp,
-        padding = 16.dp,
+        radius = spacing.space5,
+        padding = spacing.space4,
         testTag = "ai_sleep_insights_card"
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(spacing.space2))
                 .clickable { isExplanationExpanded = !isExplanationExpanded }
-                .padding(vertical = 4.dp)
+                .padding(vertical = spacing.space1)
                 .testTag("ai_sleep_insights_header")
         ) {
             MoonLogo(size = 32.dp)
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.componentGap))
             Text(
                 text = "AI Sleep Insights",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(spacing.space2))
             Icon(
                 imageVector = Icons.Default.Info,
                 contentDescription = "Calculation info",
@@ -811,38 +832,35 @@ private fun AISleepInsightsCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .padding(vertical = spacing.space2)
+                    .clip(RoundedCornerShape(spacing.space2))
                     .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
-                    .padding(10.dp)
+                    .padding(spacing.space2)
             ) {
                 Text(
                     text = "How sleep trends are calculated: AI models integrate total sleep duration, bedtime consistency, deep/REM sleep ratios, and nocturnal heart rate variation.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = 18.sp
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(spacing.componentGap))
         // T-004: render real insight text, atau empty state "Belum ada".
         if (insightText.isNullOrBlank()) {
             Text(
                 text = "Insight belum tersedia. Tambah log tidur 7 hari untuk mendapat insight personal.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp,
             )
         } else {
             Text(
                 text = insightText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp,
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(spacing.space4))
         PrimaryButton(
             text = "See All AI Recommendations",
             onClick = onSeeAllClick,
@@ -873,19 +891,19 @@ private fun IkigaiProgressCard(
     onViewReport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val spacing = LocalSpacing.current
+
     BaseCard(
         modifier = modifier.fillMaxWidth(),
-        radius = 16.dp,
-        padding = 16.dp,
         testTag = "ikigai_progress_card",
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = spacing.componentGap),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                SectionLabel(text = "IKIGAI PROGRESS", modifier = Modifier.padding(bottom = 4.dp))
+                SectionLabel(text = "IKIGAI PROGRESS", modifier = Modifier.padding(bottom = spacing.space1))
                 Text(
                     text = when {
                         isLoading -> "Memuat..."
@@ -907,7 +925,7 @@ private fun IkigaiProgressCard(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(spacing.componentGap))
         if (assessmentCount == 0) {
             PrimaryButton(
                 text = "Mulai Ikigai Assessment",
@@ -936,20 +954,20 @@ private fun TodaysRemindersCard(
     onViewAllClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
+
     BaseCard(
         modifier = modifier.fillMaxWidth(),
-        radius = 16.dp,
-        padding = 16.dp,
         testTag = "todays_reminders_card"
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
+                .padding(bottom = spacing.componentGap),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SectionLabel(text = "TODAY'S REMINDERS", modifier = Modifier.padding(bottom = 0.dp))
+            SectionLabel(text = "TODAY'S REMINDERS")
             Text(
                 text = "View all",
                 style = MaterialTheme.typography.bodySmall.copy(
@@ -962,7 +980,7 @@ private fun TodaysRemindersCard(
             )
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(spacing.space2)) {
             reminders.forEachIndexed { index, reminder ->
                 val alpha = if (reminder.isCompleted) 0.6f else 1.0f
                 val textDecoration = if (reminder.isCompleted) TextDecoration.LineThrough else TextDecoration.None
@@ -989,7 +1007,7 @@ private fun TodaysRemindersCard(
                                 )
                                 .testTag("reminder_dot_$index")
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.width(spacing.componentGap))
                         Text(
                             text = reminder.title,
                             style = MaterialTheme.typography.bodyMedium,
