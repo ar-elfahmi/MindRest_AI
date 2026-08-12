@@ -23,6 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.core.designsystem.LocalElevation
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppScaffold
+import com.example.core.designsystem.components.screenEdgePadded
 import com.example.core.network.dto.MoodLogRow
 import com.example.features.mood.presentation.viewmodel.MoodViewModel
 
@@ -49,7 +53,7 @@ fun MoodTrackingScreen(
     viewModel: MoodViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
+    val spacing = LocalSpacing.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Auto-load history ketika screen pertama kali dibuka.
@@ -70,7 +74,7 @@ fun MoodTrackingScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -96,10 +100,10 @@ fun MoodTrackingScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .screenEdgePadded(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.space6))
 
             Text(
                 text = "How are you feeling today?",
@@ -107,7 +111,7 @@ fun MoodTrackingScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(spacing.space12))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -135,7 +139,7 @@ fun MoodTrackingScreen(
                             )
                         }
                         if (isSelected) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(spacing.space1))
                             Text(
                                 text = moodLabels[moodValue].orEmpty(),
                                 style = MaterialTheme.typography.labelSmall,
@@ -146,12 +150,12 @@ fun MoodTrackingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(spacing.space12))
 
             Button(
                 onClick = { viewModel.onSaveMoodClicked() },
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(spacing.space4),
                 enabled = uiState.selectedMood != null && !uiState.isSaving
             ) {
                 if (uiState.isSaving) {
@@ -159,12 +163,12 @@ fun MoodTrackingScreen(
                         modifier = Modifier.size(24.dp),
                         strokeWidth = 2.dp
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(spacing.space2))
                 }
                 Text(if (uiState.isSaving) "Saving..." else "Save Mood")
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(spacing.space8))
 
             // ---------------- Recent Moods ----------------
             RecentMoodsSection(uiState)
@@ -174,20 +178,21 @@ fun MoodTrackingScreen(
 
 @Composable
 private fun RecentMoodsSection(uiState: com.example.features.mood.presentation.state.MoodUiState) {
+    val spacing = LocalSpacing.current
     Text(
         text = "Riwayat Mood Terakhir",
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.fillMaxWidth()
     )
-    Spacer(modifier = Modifier.height(8.dp))
+    Spacer(modifier = Modifier.height(spacing.space2))
 
     when {
         uiState.isLoadingHistory && uiState.recentMoods.isEmpty() -> {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .padding(spacing.space6),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(strokeWidth = 2.dp)
@@ -201,7 +206,7 @@ private fun RecentMoodsSection(uiState: com.example.features.mood.presentation.s
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(spacing.space4)
             )
         }
 
@@ -212,14 +217,14 @@ private fun RecentMoodsSection(uiState: com.example.features.mood.presentation.s
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(spacing.space4)
             )
         }
 
         else -> {
             uiState.recentMoods.take(10).forEach { row ->
                 MoodHistoryRowItem(row)
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.space2))
             }
         }
     }
@@ -227,16 +232,17 @@ private fun RecentMoodsSection(uiState: com.example.features.mood.presentation.s
 
 @Composable
 private fun MoodHistoryRowItem(row: MoodLogRow) {
+    val spacing = LocalSpacing.current
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 1.dp
+        tonalElevation = LocalElevation.current.xs
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(spacing.space3),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -244,7 +250,7 @@ private fun MoodHistoryRowItem(row: MoodLogRow) {
                     ?: "😐",
                 fontSize = 28.sp
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.componentGap))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = moodLabels[row.moodScore.coerceIn(1, 5)] ?: "Unknown",
