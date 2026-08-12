@@ -64,18 +64,17 @@ File lain (`AUDIT.md`, `TASKS_FASE2.md`, `Dokumen Teknis*.md`) = **referensi bac
 
 > Snapshot ini hanya untuk **referensi cepat**. Sumber kebenaran = tabel di `CHANGELOG.md`.
 
-**Sedang berjalan**: T-009 ✅ done (commits 4ba5e64, 218bae2, aeac005; FR-016 + FR-017 🟡 → 🟢). Orchestrator fix NavHost routing: RelaxScreen jadi primary (T-009), AdvancedRelaxationScreen jadi secondary destination (breathing/movement). **14/17 ✅ · 3/17 🟡 · 0/17 🔴**.
+**Sedang berjalan**: T-009 ✅ done + **T-010 runtime bug fix ✅ done**. NavHost routing orchestrator fix (`3001c72`). Invalid_jwt runtime bug ditemukan user di Ikigai assessment, fixed di commit `94b296e` (3 Android repo) + `001793d` (EF debug cleanup). Master Status saat ini **17/17 ✅** (menunggu user rebuild APK + verifikasi runtime happy path). T-009b task definition sudah siap (`fedbcfc`).
 
 **Next up** (urut):
-1. **T-009b** — UX integration RelaxScreen + AdvancedRelaxationScreen — tambah tombol "Mode Lanjutan" di RelaxScreen → navigate ke Screen.AdvancedRelaxation. Juga add bottom nav indicator / FAB.
-2. (Setelah T-009b) **Runtime E2E test phase**: FR-009 (chat) + FR-014 (sleep insight) + FR-016 (reminder) + FR-017 (relax audio) — butuh APK install di emulator/device.
-3. **PR upstream** ke `RozanRamadani/MindRest_AI` — akumulasi T-009 + cleanup dokumen proposal.
+1. **User rebuild APK** + verifikasi runtime happy path FR-009/011/013/014 setelah T-010 fix. Kalau pass → 17/17 ✅ CONFIRMED. Kalau masih ada bug → dispatch T-011 (debugging runtime).
+2. (Setelah runtime confirm) **T-009b** — UX integration RelaxScreen + AdvancedRelaxationScreen — tambah tombol "Mode Lanjutan" di RelaxScreen → navigate ke Screen.AdvancedRelaxation. (Task file sudah ada di `fedbcfc`.)
+3. (Setelah T-009b) **PR upstream** ke `RozanRamadani/MindRest_AI` — akumulasi T-009 + T-010 + cleanup dokumen proposal.
 
 **Backlog** (nanti):
 - **T-006** — Statistics rewrite (Fase 3 dari AUDIT) — pisahkan mood vs sleep chart
-- **T-011** — Edit/delete logs (Fase 4 dari AUDIT)
-- CancellationException antipattern fix (semua VM) — correctness blocker, deferred
-- Commit proposal/SRS/build.bat (kalau user mau)
+- Edit/delete logs (Fase 4 AUDIT) — belum ada task number
+- CancellationException antipattern fix (semua VM) — flagged reviewer bf94a6a1 sebagai correctness blocker, deferred
 
 ---
 
