@@ -59,7 +59,7 @@
 | FR-016 | Notifikasi pengingat | 🟡 | T-008 (planned) | — | BedtimeNotificationReceiver ada, scheduler belum fired |
 | FR-017 | Akses relaksasi (audio) | 🟡 | T-009 (planned) | — | RelaxScreen UI ada, audio playback perlu verifikasi |
 
-**Overall progress: 7/17 ✅ hijau · 8/17 🟡 parsial · 2/17 🔴 belum**
+**Overall progress: 8/17 ✅ hijau · 8/17 🟡 parsial · 1/17 🔴 belum**
 
 ---
 
