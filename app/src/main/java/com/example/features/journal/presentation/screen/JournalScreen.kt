@@ -11,6 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppScaffold
+import com.example.core.designsystem.components.screenEdgePadded
 import com.example.features.journal.presentation.viewmodel.JournalViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,6 +23,7 @@ fun JournalScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val spacing = LocalSpacing.current
 
     LaunchedEffect(uiState.errorMessage, uiState.isSuccess) {
         if (uiState.errorMessage != null) {
@@ -36,7 +40,7 @@ fun JournalScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -52,8 +56,8 @@ fun JournalScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .screenEdgePadded(),
+            verticalArrangement = Arrangement.spacedBy(spacing.space4)
         ) {
             OutlinedTextField(
                 value = uiState.journalText,
@@ -68,7 +72,7 @@ fun JournalScreen(
             Button(
                 onClick = { viewModel.onSaveEntryClicked() },
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(spacing.space4),
                 enabled = !uiState.isSaving && uiState.journalText.isNotBlank()
             ) {
                 if (uiState.isSaving) {
@@ -77,7 +81,7 @@ fun JournalScreen(
                         color = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(spacing.space2))
                     Text("Saving...")
                 } else {
                     Text("Save Entry")
