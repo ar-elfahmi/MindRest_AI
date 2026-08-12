@@ -70,6 +70,26 @@ data class ReminderItemData(
     val isCompleted: Boolean = false
 )
 
+/**
+ * Greeting dinamis berdasarkan waktu Jakarta (Asia/Jakarta).
+ *
+ * Dihitung saat komposisi (startup/recompose). Cocok untuk wellness/sleep app
+ * karena fase waktu sejajar dengan ritme harian user. Emoji membedakan fase
+ * sehingga perubahan terlihat saat spot-check visual di berbagai jam.
+ *
+ * Catatan: sumber waktu tunggal untuk greeting. Tema dark/light mengikuti
+ * kebijakan app (lihat tiket theme-by-time) — bukan fungsi ini.
+ */
+private fun jakartaGreeting(): String {
+    val hour = java.time.LocalTime.now(java.time.ZoneId.of("Asia/Jakarta")).hour
+    return when (hour) {
+        in 5..10 -> "GOOD MORNING ☀️"
+        in 11..14 -> "GOOD AFTERNOON ☀️"
+        in 15..17 -> "GOOD EVENING 🌆"
+        else -> "GOOD NIGHT 🌙"
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -195,7 +215,7 @@ fun HomeScreen(
             // 1. CUSTOM HEADER (Top Area)
         HeaderSection(
             userName = "Aria Kusuma",
-            greeting = "GOOD EVENING 🌙",
+            greeting = jakartaGreeting(),
             onNotificationClick = onNavigateToNotifications,
             onSettingsClick = onNavigateToSettings,
             isDark = isDark
@@ -663,6 +683,25 @@ private fun QuickActionsRow(
 }
 
 /**
+ * Inline section label for use as a child of a [Row] header.
+ *
+ * Unlike [SectionLabel], this does NOT apply fillMaxWidth, so sibling
+ * elements (e.g. "View all", badges) keep their intrinsic width and are
+ * not squeezed into vertical character-wrapping. Visual style matches
+ * [SectionLabel] (uppercase labelSmall, SemiBold, onSurfaceVariant 0.8).
+ */
+@Composable
+private fun InlineSectionLabel(text: String) {
+    Text(
+        text = text.uppercase(),
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.3.sp
+    )
+}
+
+/**
  * 5. WEEKLY SLEEP CHART CARD Component
  */
 @Composable
@@ -688,7 +727,7 @@ private fun WeeklySleepChartCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                SectionLabel(text = "WEEKLY SLEEP")
+                InlineSectionLabel("WEEKLY SLEEP")
                 Text(
                     text = avgText,
                     style = MaterialTheme.typography.bodyMedium,
@@ -712,10 +751,12 @@ private fun WeeklySleepChartCard(
                 )
             }
         }
-        WeeklySleepBarChartCanvas(
-            scores = weeklyScores,
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (weeklyScores.any { it > 0 }) {
+            WeeklySleepBarChartCanvas(
+                scores = weeklyScores,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -903,7 +944,7 @@ private fun IkigaiProgressCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column {
-                SectionLabel(text = "IKIGAI PROGRESS", modifier = Modifier.padding(bottom = spacing.space1))
+                InlineSectionLabel("IKIGAI PROGRESS")
                 Text(
                     text = when {
                         isLoading -> "Memuat..."
@@ -967,7 +1008,7 @@ private fun TodaysRemindersCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SectionLabel(text = "TODAY'S REMINDERS")
+            InlineSectionLabel("TODAY'S REMINDERS")
             Text(
                 text = "View all",
                 style = MaterialTheme.typography.bodySmall.copy(

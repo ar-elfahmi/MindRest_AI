@@ -69,6 +69,21 @@ complexity (pilot ringan dulu, heavy terakhir).
 
 Legend: ⬜ todo · 🟡 in-progress · ✅ done · ⛔ blocked
 
+## Follow-up tickets (di LUAR scope 20-screen UI-migration)
+
+Tiket ini **bukan bagian fase-2 token migration**. Muncul dari QA HomeScreen
+(pilot) tapi menyangkut **data-wiring / cross-cutting** yang dilarang di tiket
+UI-migration (presentation-only). Dikerjakan di branch terpisah, 1 tiket = 1 PR.
+
+| Tiket | Topik | Kategori | Status |
+|---|---|---|---|
+| [FU-01](./issues/FU-01-home-username-binding.md) | HomeScreen username binding (auth/profile) | data-wiring | ⬜ todo |
+| [FU-02](./issues/FU-02-home-sleep-data-binding.md) | HomeScreen sleep widgets → real SleepUiState | data-wiring | ⬜ todo |
+| [FU-03](./issues/FU-03-app-theme-by-time.md) | Theme dark/light by waktu Jakarta | cross-cutting | ⬜ todo |
+
+> FU-03 punya decision point (Jakarta manual vs `isSystemInDarkTheme()`) —
+> konfirmasi user sebelum eksekusi.
+
 ## Cara kerja (per tiket)
 
 1. Pilih tiket dengan status `⬜ todo`, set ke `🟡 in-progress`.
