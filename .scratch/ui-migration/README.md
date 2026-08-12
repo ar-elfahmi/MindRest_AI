@@ -47,7 +47,7 @@ complexity (pilot ringan dulu, heavy terakhir).
 | Tiket | Screen | Status |
 |---|---|---|
 | 01 | HomeScreen | ⬜ todo |
-| 02 | ProfileScreen | ⬜ todo |
+| 02 | ProfileScreen | 🟡 in-progress |
 | 03 | MoodTrackingScreen | ⬜ todo |
 | 04 | JournalHistoryScreen | ⬜ todo |
 | 05 | JournalScreen | ⬜ todo |
