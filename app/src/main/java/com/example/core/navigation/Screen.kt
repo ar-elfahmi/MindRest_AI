@@ -31,4 +31,8 @@ sealed class Screen(val route: String) {
     object IkigaiAssessment : Screen("ikigai_assessment")
     object IkigaiReportLoading : Screen("ikigai_report_loading")
     object IkigaiReport : Screen("ikigai_report")
+
+    // Dev / QA only — interactive design-system gallery. Reachable via the
+    // `mindrest://designsystem` deep link (see AndroidManifest intent-filter).
+    object DesignSystem : Screen("design_system")
 }

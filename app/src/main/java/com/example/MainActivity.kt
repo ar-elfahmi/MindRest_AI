@@ -34,9 +34,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
 import com.example.core.designsystem.MindRestTheme
 import com.example.core.designsystem.components.BottomNavigationBar
 import com.example.core.designsystem.components.NavigationItem
+import com.example.core.designsystem.showcase.DesignSystemShowcaseScreen
 import com.example.core.navigation.Screen
 import com.example.features.achievements.presentation.screen.AchievementsScreen
 import com.example.features.mood.presentation.screen.MoodTrackingScreen
@@ -399,6 +401,15 @@ fun MainApp(
                         }
                     },
                 )
+            }
+
+            // Dev/QA only — design-system showcase gallery.
+            // Reachable via the `mindrest://designsystem` deep link (adb am start).
+            composable(
+                route = Screen.DesignSystem.route,
+                deepLinks = listOf(navDeepLink { uriPattern = "mindrest://designsystem" })
+            ) {
+                DesignSystemShowcaseScreen(onBack = { navController.popBackStack() })
             }
         }
     }

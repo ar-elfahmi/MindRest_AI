@@ -27,6 +27,16 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Dev/QA only: launch the design-system showcase gallery. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="mindrest" android:host="designsystem" />
+            </intent-filter>
         </activity>
 
         <receiver
