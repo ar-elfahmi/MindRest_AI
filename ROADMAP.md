@@ -1,9 +1,12 @@
 # MindRest_AI — Roadmap Eksekusi
 
 > **Deliverable akhir dari sesi grilling (konsultasi).**
-> Dokumen ini adalah **single source of truth** untuk semua task AI agent berikutnya.
 >
-> **Aturan:** Sebelum menjalankan task apapun, baca dokumen ini + `AUDIT.md` section 0 (TEMUAN KRITIS).
+> **🆕 Status source of truth pindah ke `CHANGELOG.md` (milestone per-task) + `ORCHESTRATION.md` (alur kerja + task pipeline).**
+> ROADMAP ini sekarang = **strategi & sequencing**, bukan eksekusi.
+> Task siap copy-paste ada di folder `TASKS/`.
+>
+> **Aturan:** Sebelum menjalankan task apapun, baca `ORCHESTRATION.md` + `CHANGELOG.md` + section 0 `AUDIT.md` (TEMUAN KRITIS).
 
 ---
 
@@ -92,8 +95,8 @@
 
 | Task | Prioritas | Output |
 |---|---|---|
-| **3.1** Edge Function `generate-ikigai-report` | 🔴 Core | AI generate report → save DB |
-| **3.2** Prompt library + JSON schema | 🔴 Core | Output terstruktur `{report, circles, recs}` |
+| **3.1** Edge Function `generate-ikigai-report` | 🔴 Core | AI generate report → save DB (✅ 2026-08-10) |
+| **3.2** Prompt library + JSON schema | 🔴 Core | Output terstruktur `{report, circles, recs}` (✅ 2026-08-10) |
 | **3.3** Ikigai report display UI | 🔴 Core | Tampilkan laporan + 4 lingkaran + rekomendasi checkbox |
 
 ### 🔵 MINGGU 4 — Polish + Sleep Therapy Preview
@@ -450,6 +453,18 @@ TASK: Edge Function yang fetch assessment, assemble prompt, call Gemini,
 READ FIRST (WAJIB Context7):
   - resolve-library-id "Supabase" → query "Edge Function access database service role auth"
   - resolve-library-id "Google Generative AI" → query "Gemini response JSON mode schema"
+  - Baca supabase/functions/test-gemini/index.ts (hasil TASK 1.4) — lihat pola error
+    classifier yang SUDAH DIOPTIMALKAN (regex word-boundary, JANGAN ulang bug
+    substring "rate" match "generateContent")
+  - Baca supabase/functions/README.md (hasil TASK 1.4) — tabel latency cold/warm
+
+⚠️ CRITICAL — MODEL GEMINI (temuan TASK 1.4):
+  - JANGAN pakai "gemini-1.5-flash" → sudah DEPRECATED, return 404.
+  - JANGAN pakai "gemini-2.0-*" atau "gemini-2.5-*" → 429/404 di API key ini.
+  - GUNAKAN: model = "gemini-3.5-flash" (BUKAN lite — laporan Ikigai butuh
+    kualitas output markdown panjang + JSON terstruktur, lite kurang mumpuni).
+  - Expected latency: ~9.6s cold start, ~600ms-1s warm. UI client WAJIB loading
+    state karena total round-trip bisa 3-5 detik.
 
 SCOPE:
   - File baru: supabase/functions/generate-ikigai-report/index.ts
@@ -486,13 +501,17 @@ DON'T:
   - Jangan skip rate limit (cost leak risk).
   - Jangan expose GEMINI_API_KEY di response/error.
 
-ACCEPTANCE:
-  - [ ] curl POST dengan JWT valid → 200 + report JSON.
-  - [ ] ikigai_reports ada row baru dengan report_markdown + ikigai_circles + recommendations.
-  - [ ] Rate limit: 2x call dalam 24h → 429.
-  - [ ] JWT invalid → 401.
-  - [ ] Error Gemini (mis. key invalid) → 500 + message jelas, TANPA leak key.
-  - [ ] README update dengan cara test (curl command).
+ACCEPTANCE (all ✅ verified 2026-08-10):
+  - [x] curl POST dengan JWT valid → 200 + report JSON sesuai contract.
+  - [x] ikigai_reports ada row baru dengan report_markdown + ikigai_circles + recommendations.
+  - [x] Rate limit: 2x call dalam 24h → 429 `already_generated_today`.
+  - [x] JWT invalid → 401 (gateway-level atau handler-level).
+  - [x] Error Gemini (max output truncation) → 502 + message jelas, excerpt raw output untuk debug, TANPA leak key.
+  - [x] README update dengan cara test (curl command) + tabel acceptance.
+
+Detail di `supabase/functions/README.md` bagian "Acceptance Test Result".
+Temuan saat testing: `maxOutputTokens: 2048` tidak cukup untuk `gemini-3.5-flash`
+karena thinking model → di-fix ke `8192` (di-comment di index.ts).
 ```
 
 ---

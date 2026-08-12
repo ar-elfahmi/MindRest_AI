@@ -64,13 +64,11 @@ File lain (`AUDIT.md`, `TASKS_FASE2.md`, `Dokumen Teknis*.md`) = **referensi bac
 
 > Snapshot ini hanya untuk **referensi cepat**. Sumber kebenaran = tabel di `CHANGELOG.md`.
 
-**Sedang berjalan**: T-001b ✅ done (commits be78ba2, 4fb665b, a7d79a6, 6968673)
+**Sedang berjalan**: T-003 ✅ done (commit 33510bd, FR-009 + FR-011 → 🟡), T-004 siap dispatch
 
 **Next up** (urut, jangan loncat):
-1. **T-002** — Sleep aggregation 2B commit (15–30 menit)
-3. **T-003** — AI Chatbot wiring (FR-009, FR-011) — pakai Edge Function `test-gemini`/`hello`
-4. **T-004** — Dashboard integration final (FR-015) — gabung 2A + 2B + Ikigai progress
-5. **T-005** — Sleep Insight (FR-014) — butuh Gemini, baru bisa setelah T-003
+1. **T-004** — Dashboard integration final (FR-015) — gabung 2A + 2B + Ikigai progress
+2. **T-005** — Sleep Insight (FR-014) — butuh Gemini (✅ verified di T-003 prep), bisa paralel dengan T-004
 
 **Backlog** (nanti, setelah T-001..T-005):
 - T-006 Profile edit (FR-003)
@@ -101,7 +99,9 @@ File lain (`AUDIT.md`, `TASKS_FASE2.md`, `Dokumen Teknis*.md`) = **referensi bac
 | Agent lupa update CHANGELOG | Orchestrator cek entry pertama saat verifikasi |
 | Agent kerja di luar scope | Setiap prompt sudah list "DON'T Touch" |
 | Uncommitted work hilang | T-001 WAJIB dijalankan pertama untuk commit Ikigai M2/M3 |
-| `GEMINI_API_KEY` belum di `.env` | T-003 baru bisa setelah user isi key di `.env` |
+| `GEMINI_API_KEY` di Supabase secrets | ✅ VERIFIED (HTTP 200, 666ms, model `gemini-3.5-flash-lite`). Lihat `verify-gemini.ps1` + note untuk re-run kalau perlu |
+| `JAVA_HOME` belum ter-set di shell Windows default | Agent T-001b harus `set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr` manual sebelum `./gradlew`. Tambahkan ke README/setup supaya tidak hit blocker tiap task |
+| `.env.example` masih modified dari sesi sebelumnya | Perlu review terpisah (orchestrator atau T khusus) sebelum commit — perubahan agent lama belum final |
 | `SUPABASE_URL`/`ANON_KEY` masih placeholder | Agent akan dapat error network, tulis ❌ di CHANGELOG dengan diagnosis |
 
 ---
