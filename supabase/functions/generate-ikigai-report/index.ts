@@ -200,18 +200,6 @@ Deno.serve(async (req: Request) => {
   let userId: string
   try {
     const { data, error } = await authClient.auth.getUser(jwt)
-    // [DEBUG-3.x] Logging diagnostik untuk akar masalah 401 (lihat TASK 3.x).
-    // Dihapus setelah akar masalah ditemukan & diperbaiki.
-    console.log('[auth-debug] jwt length:', jwt.length)
-    console.log('[auth-debug] jwt prefix:', jwt.substring(0, 20))
-    console.log(
-      '[auth-debug] supabaseUrl:',
-      supabaseUrl,
-      'anonKey length:',
-      (Deno.env.get('SUPABASE_ANON_KEY') ?? '').length,
-    )
-    console.log('[auth-debug] getUser error:', JSON.stringify(error))
-    console.log('[auth-debug] getUser data.user:', data?.user?.id ?? null)
     if (error || !data?.user) {
       return jsonResponse(
         {
@@ -219,14 +207,6 @@ Deno.serve(async (req: Request) => {
           error: {
             code: 'invalid_jwt',
             message: 'JWT tidak valid atau kadaluarsa.',
-            // [DEBUG-3.x] Expose error ASLI dari getUser() supaya akar
-            // masalah terlihat. Setelah fix, HAPUS field ini dari response
-            // (jangan bocorkan detail auth ke client produksi).
-            debug_error: error
-              ? String(error.message ?? error)
-              : 'no_user_returned',
-            debug_token_length: jwt.length,
-            debug_token_prefix: jwt.substring(0, 20),
           },
         },
         401,
