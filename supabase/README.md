@@ -60,24 +60,62 @@ Verifikasi cepat: buka **Table Editor** di sidebar. Akan ada tabel:
    (**Build → Make Project** atau jalankan ulang).
    Gradle tidak auto-reload `.env` — *wajib rebuild*.
 
-## 5. (Sangat disarankan) Aktifkan Email Auth
+## 5. (Sangat disarankan) Aktifkan Email & Google Auth
 
 Sampai sini, semua Repository butuh `currentSessionOrNull()?.user?.id`.
 Tanpa login → semua fitur Mood/Sleep/Journal akan menampilkan
 error `"User not logged in"`.
 
+### 5a. Email (default)
+
 1. Dashboard Supabase → **Authentication** → **Providers**.
 2. Aktifkan **Email** (default sudah aktif di project baru).
-3. (Opsional) Aktifkan juga Google / Apple sesuai kebutuhan.
+3. (Lihat langkah 7 di bawah untuk konfirmasi email.)
 
-Login UI di Android (`AuthPlaceholders.kt`) **belum diimplementasikan**
-— lihat TODO di langkah 6.
+### 5b. Google (native Credential Manager)
+
+Login UI sudah punya tombol "Continue with Google" di `LoginScreen`. Untuk
+mengaktifkannya end-to-end:
+
+1. **Buat OAuth Client di Google Cloud Console**
+   - Buka <https://console.cloud.google.com/> → pilih / buat project.
+   - **APIs & Services** → **Credentials** → **Create credentials** →
+     **OAuth client ID**.
+   - **Application type:** `Web application` (BUKAN Android — Credential
+     Manager butuh server-style audience).
+   - Name: bebas (mis. `MindRest Web OAuth`).
+   - **Authorized redirect URIs:** tambahkan
+     `https://<PROJECT_REF>.supabase.co/auth/v1/callback`
+     (ganti `<PROJECT_REF>` dengan subdomain Supabase kamu).
+   - Simpan → catat **Client ID** dan **Client Secret**.
+
+2. **Aktifkan Google provider di Supabase**
+   - Dashboard Supabase → **Authentication** → **Providers** → **Google** → enable.
+   - Paste **Client ID** & **Client Secret** dari langkah 1.
+   - Klik **Save**.
+
+3. **Set `GOOGLE_WEB_CLIENT_ID` di `.env` Android**
+   - Edit `.env` di root project Android.
+   - Set `GOOGLE_WEB_CLIENT_ID=<Client ID dari langkah 1>`
+     (hanya Client ID, bukan Secret — Secret hanya dipakai server-side).
+   - Rebuild: **Build → Make Project**.
+
+4. **Tambahkan tabel `profiles`** (lihat `schema.sql`)
+   - Jalankan `supabase/schema.sql` terbaru (sudah termasuk tabel `profiles`
+     + trigger auto-create dari `auth.users`).
+   - Trigger ini yang memastikan row `public.profiles` otomatis dibuat saat
+     user pertama kali sign-in via Google — isi `display_name`, `avatar_url`,
+     `email` diambil dari `raw_user_meta_data` Google.
+
+Setelah selesai, tap tombol "Continue with Google" di app → muncul
+bottom-sheet akun Google → pilih akun → otomatis sign-in & navigasi ke Home.
 
 ## 6. Langkah berikutnya (di luar setup Supabase)
 
 Setelah app bisa konek ke Supabase:
 
 - [x] ~~Implementasi Login/Register screen di `features/authentication/`~~ ✅
+- [x] ~~Implementasi "Continue with Google" via Credential Manager~~ ✅
 - [ ] Tambah operasi READ di tiap Repository (history/statistik)
 - [ ] Integrasi Gemini AI untuk `AiJournalScreen`
 
