@@ -47,6 +47,7 @@ fun SleepHubScreen(
     onLogSleepClick: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsState()
+    val spacing = LocalSpacing.current
 
     // Auto-load history + weekly aggregation (TASK 2B) ketika screen pertama kali dibuka.
     LaunchedEffect(Unit) {
@@ -84,7 +85,7 @@ fun SleepHubScreen(
         )
     )
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             TopBar(
                 title = "Sleep & Insights",
@@ -102,15 +103,14 @@ fun SleepHubScreen(
                 Icon(Icons.Default.Add, contentDescription = "Log Sleep")
             }
         },
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(innerPadding),
+            contentPadding = screenEdgeValues(),
+            verticalArrangement = Arrangement.spacedBy(spacing.space4)
         ) {
             // TOP BAR & CONTROLS: Segmented button for "Weekly | Monthly | Yearly"
             item {
@@ -135,7 +135,7 @@ fun SleepHubScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.componentGap)
                 ) {
                     MetricTile(
                         label = "Bedtime",
@@ -165,10 +165,10 @@ fun SleepHubScreen(
             item {
                 BaseCard(
                     radius = 20.dp,
-                    padding = 16.dp
+                    padding = spacing.space4
                 ) {
                     SectionLabel(text = "SLEEP STAGE DISTRIBUTION")
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(spacing.space4))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -180,15 +180,15 @@ fun SleepHubScreen(
                             remValue = 0.28f,
                             modifier = Modifier.size(110.dp)
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
+                        Spacer(modifier = Modifier.width(spacing.space4))
                         Column(
                             modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(spacing.space2)
                         ) {
                             StageLegendRow(
                                 label = "Light Sleep",
                                 duration = "3h 42m (48%)",
-                                color = Color(0xFFEB845C)
+                                color = LightAccent
                             )
                             StageLegendRow(
                                 label = "Deep Sleep",
@@ -213,7 +213,7 @@ fun SleepHubScreen(
             item {
                 BaseCard(
                     radius = 20.dp,
-                    padding = 16.dp
+                    padding = spacing.space4
                 ) {
                     WeeklySleepBarChart(
                         scores = state.weeklySleepScores,
@@ -236,7 +236,7 @@ fun SleepHubScreen(
 
             // SECTION 4: RECENT SLEEP LOGS (data real dari Supabase)
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.space2))
                 SectionLabel(text = "RIWAYAT TIDUR TERAKHIR")
             }
 
@@ -245,7 +245,7 @@ fun SleepHubScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
+                            .padding(spacing.space8),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(strokeWidth = 2.dp)
@@ -259,7 +259,7 @@ fun SleepHubScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(spacing.space4)
                     )
                 }
 
@@ -270,7 +270,7 @@ fun SleepHubScreen(
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(spacing.space4)
                     )
                 }
 
@@ -284,6 +284,7 @@ fun SleepHubScreen(
 
 @Composable
 private fun RecentSleepLogCard(row: SleepLogRow) {
+    val spacing = LocalSpacing.current
     BaseCard(
         radius = 16.dp,
         padding = 14.dp
@@ -297,7 +298,7 @@ private fun RecentSleepLogCard(row: SleepLogRow) {
                 contentDescription = null,
                 tint = FeatureJourney
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(spacing.componentGap))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${formatTimeShort(row.bedTime)} → ${formatTimeShort(row.wakeUpTime)}",
@@ -346,6 +347,7 @@ private fun StageLegendRow(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -357,7 +359,7 @@ private fun StageLegendRow(
                     .size(10.dp)
                     .background(color, shape = RoundedCornerShape(3.dp))
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(spacing.space2))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
