@@ -39,6 +39,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.designsystem.FeatureJournaling
 import com.example.core.designsystem.FeatureJourney
 import com.example.core.designsystem.FeatureLifestyle
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
 import com.example.core.designsystem.components.*
 import com.example.features.profile.presentation.state.ProfileUiState
@@ -74,10 +75,16 @@ fun ProfileScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    val spacing = LocalSpacing.current
+
+    AppScaffold(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
                 .testTag("profile_screen")
         ) {
@@ -88,10 +95,10 @@ fun ProfileScreen(
                 actionSlot = {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(spacing.space3))
                             .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
                             .clickable(onClick = onNavigateToSettings)
-                            .padding(8.dp)
+                            .padding(spacing.space2)
                             .testTag("topbar_settings_button"),
                         contentAlignment = Alignment.Center
                     ) {
@@ -129,17 +136,17 @@ fun ProfileScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 24.dp)
+                        .screenEdge()
+                        .padding(bottom = spacing.space6)
                         .testTag("profile_content_section"),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(spacing.space4)
                 ) {
                     // 3. StatsGrid (3 columns)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("profile_stats_grid"),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.componentGap)
                     ) {
                         StatTile(
                             value = "14",
@@ -169,9 +176,7 @@ fun ProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(onClick = onNavigateToAchievements)
-                            .testTag("achievements_card"),
-                        radius = 16.dp,
-                        padding = 16.dp
+                            .testTag("achievements_card")
                     ) {
                         SectionLabel(
                             text = "Achievements",
@@ -181,7 +186,7 @@ fun ProfileScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("achievements_grid"),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.componentGap)
                         ) {
                             AchievementBadge(
                                 emoji = "🌙",
@@ -267,13 +272,6 @@ fun ProfileScreen(
             }
         }
 
-        // Snackbar host (overlay, tidak menggangu layout)
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 16.dp)
-        )
     }
 
     // T-007: Dialog konfirmasi sebelum logout.
@@ -326,12 +324,14 @@ private fun ReadOnlyField(
     value: String,
     testTag: String,
 ) {
+    val spacing = LocalSpacing.current
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = label,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 4.dp),
+            modifier = Modifier.padding(bottom = spacing.space1),
         )
         Row(
             modifier = Modifier
@@ -343,10 +343,10 @@ private fun ReadOnlyField(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                     shape = RoundedCornerShape(14.dp),
                 )
-                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .padding(horizontal = spacing.space4, vertical = 14.dp)
                 .testTag(testTag),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing.componentGap),
         ) {
             Icon(
                 imageVector = icon,
@@ -356,7 +356,7 @@ private fun ReadOnlyField(
             )
             Text(
                 text = value,
-                fontSize = 14.sp,
+                style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -383,6 +383,7 @@ private fun EditProfileCard(
     onSave: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    val spacing = LocalSpacing.current
     val datePickerState = rememberDatePickerState(
         initialSelectedDateMillis = state.draftDateOfBirth?.toEpochMillis()
     )
@@ -391,8 +392,6 @@ private fun EditProfileCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("edit_profile_card"),
-        radius = 16.dp,
-        padding = 16.dp,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -412,15 +411,15 @@ private fun EditProfileCard(
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(spacing.space1))
                 Text(
                     text = if (state.isEditMode) "Batal" else "Edit",
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.labelMedium,
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(spacing.componentGap))
 
         // Full name field — read-only display saat tidak edit mode,
         // TextInputField interaktif saat edit mode.
@@ -444,7 +443,7 @@ private fun EditProfileCard(
             )
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(spacing.componentGap))
 
         // Date of birth row (read-only display + tap to open DatePicker)
         Box(
@@ -458,12 +457,12 @@ private fun EditProfileCard(
                     shape = RoundedCornerShape(14.dp),
                 )
                 .clickable(enabled = state.isEditMode) { showDatePicker = true }
-                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .padding(horizontal = spacing.space4, vertical = 14.dp)
                 .testTag("profile_date_of_birth_row"),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(spacing.componentGap),
             ) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
@@ -474,13 +473,13 @@ private fun EditProfileCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Tanggal Lahir",
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
                         text = state.draftDateOfBirth?.formatDisplayDate()
                             ?: "Belum diisi",
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.Medium,
                         color = if (state.draftDateOfBirth == null) {
                             MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -494,14 +493,14 @@ private fun EditProfileCard(
                         onClick = { onDateOfBirthChange(null) },
                         modifier = Modifier.testTag("profile_clear_dob"),
                     ) {
-                        Text("Hapus", fontSize = 12.sp)
+                        Text("Hapus", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
         }
 
         if (state.isEditMode) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.space4))
             PrimaryButton(
                 text = if (state.isSaving) "Menyimpan..." else "Simpan",
                 onClick = onSave,
