@@ -49,7 +49,7 @@ complexity (pilot ringan dulu, heavy terakhir).
 | 01 | HomeScreen | ✅ done |
 | 02 | ProfileScreen | ✅ done |
 | 03 | MoodTrackingScreen | ✅ done |
-| 04 | JournalHistoryScreen | 🟡 in-progress |
+| 04 | JournalHistoryScreen | ✅ done |
 | 05 | JournalScreen | ⬜ todo |
 | 06 | SleepHubScreen | ⬜ todo |
 | 07 | SleepTrackingScreen | ⬜ todo |

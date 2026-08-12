@@ -22,15 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -48,7 +46,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
+import com.example.core.designsystem.components.AppCard
+import com.example.core.designsystem.components.AppCardVariant
+import com.example.core.designsystem.components.AppScaffold
+import com.example.core.designsystem.components.EmptyState
+import com.example.core.designsystem.components.SectionHeader
+import com.example.core.designsystem.components.screenEdge
+import com.example.core.designsystem.components.screenEdgePadded
+import com.example.core.designsystem.components.screenEdgeValues
 import com.example.core.network.dto.JournalEntryRow
 import com.example.features.journal.presentation.viewmodel.JournalViewModel
 import com.example.features.mood.presentation.viewmodel.MoodViewModel
@@ -70,6 +77,7 @@ fun JournalHistoryScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val moodState by moodViewModel.uiState.collectAsState()
+    val spacing = LocalSpacing.current
 
     // Auto-load history + mood mingguan setiap kali screen dibuka.
     LaunchedEffect(Unit) {
@@ -79,9 +87,8 @@ fun JournalHistoryScreen(
 
     val entries = state.recentEntries.map { it.toJournalEntryData() }
 
-    Scaffold(
+    AppScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -121,21 +128,19 @@ fun JournalHistoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            contentPadding = PaddingValues(bottom = spacing.space20)
         ) {
             item {
                 WeeklyMoodTimeline(
                     scores = moodState.weeklyMoodScores,
                     isLoading = moodState.isLoadingWeekly,
                     todayIndex = todayDayIndex(),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)
+                    modifier = Modifier.screenEdgePadded()
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Sesi Sebelumnya",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp)
+                Spacer(modifier = Modifier.height(spacing.space4))
+                SectionHeader(
+                    title = "Sesi Sebelumnya",
+                    modifier = Modifier.screenEdge()
                 )
             }
             
@@ -144,7 +149,7 @@ fun JournalHistoryScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
+                            .padding(spacing.space8),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(strokeWidth = 2.dp)
@@ -155,7 +160,7 @@ fun JournalHistoryScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(32.dp),
+                            .padding(spacing.space8),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -168,19 +173,12 @@ fun JournalHistoryScreen(
                 }
 
                 entries.isEmpty() -> item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Belum ada entri jurnal. Mulai sesi pertama kamu!",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
+                    EmptyState(
+                        icon = Icons.Filled.Edit,
+                        title = "Belum ada entri jurnal",
+                        description = "Mulai sesi pertama kamu!",
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
 
                 else -> items(entries) { entry ->
@@ -188,7 +186,7 @@ fun JournalHistoryScreen(
                         entry = entry,
                         onClick = { /* TODO: Navigate to journal detail */ },
                         modifier = Modifier
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = spacing.screenHorizontal, vertical = spacing.space2)
                             .fillMaxWidth()
                     )
                 }
@@ -248,6 +246,7 @@ private fun WeeklyMoodTimeline(
     modifier: Modifier = Modifier
 ) {
     val days = listOf("S", "S", "R", "K", "J", "S", "M")
+    val spacing = LocalSpacing.current
     val padded = remember(scores) {
         // Pastikan selalu 7 elemen untuk layout stabil.
         List(7) { idx -> scores.getOrNull(idx) ?: 0 }
@@ -265,14 +264,14 @@ private fun WeeklyMoodTimeline(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp)
+                .padding(bottom = spacing.space3)
         )
         if (isLoading) {
             // Loading skeleton: spinner di tengah, layout tetap.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = spacing.space2),
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
@@ -299,7 +298,7 @@ private fun WeeklyMoodTimeline(
                             ),
                             color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(spacing.space2))
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
@@ -329,7 +328,7 @@ private fun WeeklyMoodTimeline(
                 }
             }
             if (!hasAnyData) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.space2))
                 Text(
                     text = "Belum ada data mood minggu ini.",
                     style = MaterialTheme.typography.bodySmall,
@@ -380,18 +379,16 @@ private fun JournalEntryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    val spacing = LocalSpacing.current
+    AppCard(
+        modifier = modifier,
+        onClick = onClick,
+        variant = AppCardVariant.Elevated,
+        contentPadding = spacing.space4,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -408,10 +405,10 @@ private fun JournalEntryCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .padding(horizontal = spacing.space2, vertical = spacing.space1)
                 ) {
                     Text(text = entry.moodEmoji)
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(spacing.space1))
                     Text(
                         text = entry.moodText,
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
@@ -420,7 +417,7 @@ private fun JournalEntryCard(
                 }
             }
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.space3))
             
             Text(
                 text = "AI Summary:",
@@ -428,7 +425,7 @@ private fun JournalEntryCard(
                 color = MaterialTheme.colorScheme.primary
             )
             
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(spacing.space1))
             
             Text(
                 text = entry.summary,
@@ -438,7 +435,7 @@ private fun JournalEntryCard(
                 overflow = TextOverflow.Ellipsis
             )
             
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.space3))
             
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -449,7 +446,7 @@ private fun JournalEntryCard(
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(spacing.space1))
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "Read Full Chat",
