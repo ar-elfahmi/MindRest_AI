@@ -49,9 +49,9 @@
 | FR-006 | Riwayat tidur | 🟢 | T-2B | dfbe7aa | SleepRepository.getDailySleepScores + SleepViewModel.onLoadWeeklyScores wired; SleepHubScreen chart pakai state riil (sampleWeeklyScores dihapus) |
 | FR-007 | Catat mood (skor 1-5) | 🟢 | T-1.1 | a7b5fbb | Bottom sheet sudah pakai moodScore langsung |
 | FR-008 | Riwayat mood | 🟢 | T-2A | task-2a-output.md | weeklyScores pakai query riil, belum commit |
-| FR-009 | Journaling via AI Chatbot | 🟡 | T-003 | 118ba55 | AiJournalScreen wired ke Edge Function chat-gemini; runtime E2E test butuh user JWT + GEMINI_API_KEY verified di Supabase secrets |
+| FR-009 | Journaling via AI Chatbot | 🟡 | T-003 | 33510bd | AiJournalScreen wired ke Edge Function chat-gemini; runtime E2E test butuh user JWT + GEMINI_API_KEY verified di Supabase secrets |
 | FR-010 | Riwayat jurnal | 🟢 | T-2C | task-2c-output.md | WeeklyMoodTimeline wired, belum commit |
-| FR-011 | Olah data jurnal → insight | 🟡 | T-003 | 118ba55 | Data flow conversation history → Gemini ada; insight extraction (summary/mood detection) masuk T-005 |
+| FR-011 | Olah data jurnal → insight | 🟡 | T-003 | 33510bd | Data flow conversation history → Gemini ada; insight extraction (summary/mood detection) masuk T-005 |
 | FR-012 | Isi 6 pertanyaan Ikigai | 🟢 | T-001 | f4ee87e | IkigaiAssessmentScreen wired ke Dashboard via NavHost, 6 step form + insert ke DB |
 | FR-013 | Rekomendasi pengembangan diri | 🟢 | T-001 | f4ee87e | IkigaiReportScreen wired (4 lingkaran + laporan + rekomendasi); Edge Function generate-ikigai-report ter-commit, runtime test butuh GEMINI_API_KEY di T-003 |
 | FR-014 | Rekomendasi aktivitas/makanan dari sleep | 🟡 | T-005 | 6410a68 | LifestyleScreen Sleep Insight section wired ke Edge Function `generate-sleep-insight` (Gemini JSON mode + `SLEEP_INSIGHT_RESPONSE_SCHEMA`); 3-section display (activities/foods/music) + summary + refresh; runtime E2E test butuh GEMINI_API_KEY di Supabase secrets + user JWT (sama pola dengan T-003/T-004) |
@@ -59,7 +59,7 @@
 | FR-016 | Notifikasi pengingat | 🟡 | T-008 (planned) | — | BedtimeNotificationReceiver ada, scheduler belum fired |
 | FR-017 | Akses relaksasi (audio) | 🟡 | T-009 (planned) | — | RelaxScreen UI ada, audio playback perlu verifikasi |
 
-**Overall progress: 11/17 ✅ hijau · 6/17 🟡 parsial · 0/17 🔴 belum**
+**Overall progress: 12/17 ✅ hijau · 5/17 🟡 parsial · 0/17 🔴 belum**
 
 ---
 

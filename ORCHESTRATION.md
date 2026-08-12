@@ -64,18 +64,16 @@ File lain (`AUDIT.md`, `TASKS_FASE2.md`, `Dokumen Teknis*.md`) = **referensi bac
 
 > Snapshot ini hanya untuk **referensi cepat**. Sumber kebenaran = tabel di `CHANGELOG.md`.
 
-**Sedang berjalan**: T-004 + T-005 ✅ done (T-004 commit e96481e FR-015 🟢; T-005 commits 6410a68 + c0ef359 FR-014 🔴→🟡). Mig 005 di-apply & EF `generate-sleep-insight` di-deploy oleh orchestrator (agent T-005 skip step deploy). Lanjut T-007 (Auth) atau T-009 (Reminder/Relax).
+**Sedang berjalan**: T-007 ✅ done (commits 45250bb + 7986466, FR-001/002/003 🟡 → 🟢). Mig 006 di-apply & FR-009/011 commit hash typo fixed oleh orchestrator. **0 🔴 tersisa, tinggal 5 🟡**: FR-009 (chat E2E), FR-011 (insight extraction), FR-014 (sleep insight E2E), FR-016 (reminder), FR-017 (relax audio).
 
 **Next up** (urut, jangan loncat):
-1. **T-007** — Auth flow end-to-end test (FR-001, FR-002) — sign-up + login flow
-2. **T-009** — Reminder + Relax (FR-016, FR-017) — notification + audio playback
+1. **T-009** — Reminder + Relax (FR-016, FR-017) — notification scheduling + audio playback (2 FR dalam 1 task)
+2. (Setelah itu) Runtime E2E test phase: FR-009 + FR-014 + FR-001/002/003 (butuh APK install)
 
 **Backlog** (nanti, polling final):
-- **T-006** — Profile edit (FR-003)
-- **T-010** — Statistics charts pakai data riil (Fase 3 dari AUDIT)
+- **T-006** — Statistics rewrite (Fase 3 dari AUDIT) — pisahkan mood vs sleep chart
 - **T-011** — Edit/delete logs (Fase 4 dari AUDIT)
-- Runtime E2E test FR-009, FR-011, FR-014 — butuh user JWT nyata (sign-up via app, kirim chat/refresh insight)
-- FR-013 Edge Function `generate-ikigai-report` runtime test masih deferred
+- CancellationException antipattern fix (semua VM) — flagged by reviewer bf94a6a1 sebagai correctness blocker, di-defer karena konsistensi codebase priority
 - PR upstream ke `RozanRamadani/MindRest_AI`
 - Commit proposal/SRS/build.bat (kalau user mau)
 
