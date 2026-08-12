@@ -65,3 +65,33 @@ data class JournalEntryRow(
     @SerialName("role") val role: String? = null,
     @SerialName("parent_id") val parentId: String? = null,
 )
+
+// ---------------------------------------------------------------------------
+// T-007: Profile DTOs (FR-003 — lengkapi/update profil).
+//
+// Field `display_name` di schema.sql = "full name" user. `email` di-copy
+// dari auth.users saat sign-up oleh trigger `on_auth_user_created`.
+// `date_of_birth` nullable — kolom ditambahkan oleh migration 006, jadi
+// baris lama decode dengan null aman.
+//
+// ProfileUpdate adalah subset yang boleh di-update dari client (display_name
+// + date_of_birth). Kolom lain (id, email, avatar_url, created_at,
+// updated_at) di-set server-side via trigger / RLS.
+// ---------------------------------------------------------------------------
+
+@Serializable
+data class ProfileRow(
+    @SerialName("id") val id: String,
+    @SerialName("email") val email: String? = null,
+    @SerialName("display_name") val displayName: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+    @SerialName("date_of_birth") val dateOfBirth: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+)
+
+@Serializable
+data class ProfileUpdate(
+    @SerialName("display_name") val displayName: String? = null,
+    @SerialName("date_of_birth") val dateOfBirth: String? = null,
+)
