@@ -64,17 +64,17 @@ File lain (`AUDIT.md`, `TASKS_FASE2.md`, `Dokumen Teknis*.md`) = **referensi bac
 
 > Snapshot ini hanya untuk **referensi cepat**. Sumber kebenaran = tabel di `CHANGELOG.md`.
 
-**Sedang berjalan**: T-007 ✅ done (commits 45250bb + 7986466, FR-001/002/003 🟡 → 🟢). Mig 006 di-apply & FR-009/011 commit hash typo fixed oleh orchestrator. **0 🔴 tersisa, tinggal 5 🟡**: FR-009 (chat E2E), FR-011 (insight extraction), FR-014 (sleep insight E2E), FR-016 (reminder), FR-017 (relax audio).
+**Sedang berjalan**: T-009 ✅ done (commits 4ba5e64, 218bae2, aeac005; FR-016 + FR-017 🟡 → 🟢). Orchestrator fix NavHost routing: RelaxScreen jadi primary (T-009), AdvancedRelaxationScreen jadi secondary destination (breathing/movement). **14/17 ✅ · 3/17 🟡 · 0/17 🔴**.
 
-**Next up** (urut, jangan loncat):
-1. **T-009** — Reminder + Relax (FR-016, FR-017) — notification scheduling + audio playback (2 FR dalam 1 task)
-2. (Setelah itu) Runtime E2E test phase: FR-009 + FR-014 + FR-001/002/003 (butuh APK install)
+**Next up** (urut):
+1. **T-009b** — UX integration RelaxScreen + AdvancedRelaxationScreen — tambah tombol "Mode Lanjutan" di RelaxScreen → navigate ke Screen.AdvancedRelaxation. Juga add bottom nav indicator / FAB.
+2. (Setelah T-009b) **Runtime E2E test phase**: FR-009 (chat) + FR-014 (sleep insight) + FR-016 (reminder) + FR-017 (relax audio) — butuh APK install di emulator/device.
+3. **PR upstream** ke `RozanRamadani/MindRest_AI` — akumulasi T-009 + cleanup dokumen proposal.
 
-**Backlog** (nanti, polling final):
+**Backlog** (nanti):
 - **T-006** — Statistics rewrite (Fase 3 dari AUDIT) — pisahkan mood vs sleep chart
 - **T-011** — Edit/delete logs (Fase 4 dari AUDIT)
-- CancellationException antipattern fix (semua VM) — flagged by reviewer bf94a6a1 sebagai correctness blocker, di-defer karena konsistensi codebase priority
-- PR upstream ke `RozanRamadani/MindRest_AI`
+- CancellationException antipattern fix (semua VM) — correctness blocker, deferred
 - Commit proposal/SRS/build.bat (kalau user mau)
 
 ---

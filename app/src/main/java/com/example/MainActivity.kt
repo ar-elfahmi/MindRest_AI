@@ -55,6 +55,7 @@ import com.example.features.lifestyle.presentation.screen.LifestyleScreen
 import com.example.features.notification.presentation.screen.NotificationScreen
 import com.example.features.profile.presentation.screen.ProfileScreen
 import com.example.features.relaxation.presentation.screen.AdvancedRelaxationScreen
+import com.example.features.relaxation.presentation.screen.RelaxScreen
 import com.example.features.reminder.presentation.screen.ReminderScreen
 import com.example.features.settings.presentation.screen.SettingsScreen
 import com.example.features.sleep.presentation.screen.SleepHubScreen
@@ -251,8 +252,16 @@ fun MainApp(
                 )
             }
 
-            // Relaxation Tab
+            // Relaxation Tab — primary route RelaxScreen (T-009 ExoPlayer audio player).
+            // AdvancedRelaxationScreen (breathing + movement + audio mixer) sementara
+            // tidak di-route, menunggu T-009b untuk UX integration.
             composable(Screen.Relaxation.route) {
+                RelaxScreen()
+            }
+
+            // AdvancedRelaxationScreen sebagai secondary destination — akan diaktifkan
+            // oleh T-009b (tombol "Mode Lanjutan" di RelaxScreen).
+            composable(Screen.AdvancedRelaxation.route) {
                 AdvancedRelaxationScreen(
                     onNavigateBack = { navController.popBackStack() }
                 )

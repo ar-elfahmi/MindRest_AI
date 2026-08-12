@@ -11,6 +11,7 @@ sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Sleep : Screen("sleep")
     object Relaxation : Screen("relaxation")
+    object AdvancedRelaxation : Screen("relaxation/advanced")
     object Ikigai : Screen("ikigai")
     object Profile : Screen("profile")
 
