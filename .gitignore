@@ -27,4 +27,6 @@ local.properties
 debug.keystore
 prompt/
 /prompt
+/supabase/.temp/
+/scripts/notes/
 
