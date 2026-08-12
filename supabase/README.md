@@ -128,19 +128,38 @@ Supabase secara **default mengaktifkan konfirmasi email** untuk sign-up baru
 konfirmasi** di inbox sebelum bisa sign in. Kalau tidak, login akan selalu
 gagal dengan error `Email not confirmed` (atau `Invalid login credentials`).
 
+LoginViewModel sudah punya handler untuk exception ini dengan pesan ramah
+("Please confirm your email first — check your inbox."). Tetap saja, untuk
+E2E test lokal lebih cepat tanpa harus bolak-balik inbox:
+
 ### Opsi A: Disable konfirmasi email (disarankan untuk MVP/testing)
 
 1. Dashboard → **Authentication** → **Providers** → **Email**.
 2. Scroll ke bawah → matikan toggle **"Confirm email"**.
 3. Klik **Save**.
 
-Sekarang sign-up → langsung aktif, bisa langsung sign-in.
+Sekarang sign-up → langsung aktif, bisa langsung sign-in. Cocok untuk
+end-to-end test FR-001/002/003 (auth flow + profile edit) di emulator lokal
+tanpa harus setup SMTP atau pakai Mailtrap/inbucket.
 
 ### Opsi B: Keep konfirmasi ON (production-grade)
 
 1. Jalankan `Sign Up` di app → cek inbox (termasuk folder Spam).
 2. Klik link konfirmasi dari Supabase.
-3. Baru jalankan `Sign In`.
+3. Baru jalankan `Sign In**.
+
+### T-007 — testing catatan
+
+Untuk verifikasi auth flow end-to-end (FR-001, FR-002, FR-003) di fase ini,
+**pakai Opsi A (disable confirm email)**. Trigger `on_auth_user_created` di
+`schema.sql` (line 130-131) sudah aktif sehingga row `profiles` auto-create
+begitu sign-up berhasil, sehingga `ProfileViewModel.load()` bisa langsung query
+back ke tabel `profiles` dan user bisa edit `display_name` + `date_of_birth`
+di ProfileScreen.
+
+Migration `006_profile_date_of_birth.sql` menambahkan kolom `date_of_birth`
+DATE nullable ke tabel `profiles` (untuk FR-003 — lengkapi profil). Jalankan
+via SQL Editor sebelum testing profile edit.
 
 ---
 
