@@ -101,6 +101,8 @@ File lain (`AUDIT.md`, `TASKS_FASE2.md`, `Dokumen Teknis*.md`) = **referensi bac
 | `JAVA_HOME` belum ter-set di shell Windows default | Agent T-001b harus `set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr` manual sebelum `./gradlew`. Tambahkan ke README/setup supaya tidak hit blocker tiap task |
 | `.env.example` masih modified dari sesi sebelumnya | Perlu review terpisah (orchestrator atau T khusus) sebelum commit — perubahan agent lama belum final |
 | `SUPABASE_URL`/`ANON_KEY` masih placeholder | Agent akan dapat error network, tulis ❌ di CHANGELOG dengan diagnosis |
+| ~~Invalid_jwt runtime bug (T-010)~~ | ✅ **FIXED** `94b296e` + `001793d` — manual `Authorization: Bearer $accessToken` di 3 repo Android (Ikigai, Journal, SleepInsight) dihapus. Root cause: Ktor merge manual + auto-generated Authorization dari supabase-kt jadi `Bearer <jwt>, Bearer <jwt>`. **Pola fix reusable**: JANGAN manual append Authorization header di `client.functions.invoke(...)` baru. |
+| ~~Edge Function agents skip deployment~~ | ✅ mitigated — agent T-007/T-009 self-verify via `supabase functions list` sebelum exit. T-005 (yang skip) di-deploy manual oleh orchestrator |
 
 ---
 
