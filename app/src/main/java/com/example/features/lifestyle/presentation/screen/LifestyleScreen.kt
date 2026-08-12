@@ -23,19 +23,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,11 +59,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import com.example.core.designsystem.MindRestTheme
+import com.example.core.designsystem.components.BaseCard
 import com.example.core.designsystem.components.GoalCard
+import com.example.core.designsystem.components.PrimaryButton
 import com.example.core.designsystem.components.ProgressSummaryCard
 import com.example.core.designsystem.components.SectionLabel
 import com.example.core.designsystem.components.TopBar
+import com.example.features.lifestyle.data.dto.SleepInsightData
+import com.example.features.lifestyle.data.dto.SleepInsightItem
+import com.example.features.lifestyle.presentation.state.LifestyleUiState
+import com.example.features.lifestyle.presentation.viewmodel.LifestyleViewModel
 import kotlin.random.Random
 
 /**
@@ -140,10 +154,15 @@ fun LifestyleScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToRelaxation: () -> Unit = {},
     onNavigateToJournal: () -> Unit = {},
+    // T-005 / FR-014: ViewModel untuk Sleep Insight pipeline (Gemini).
+    // Default via viewModel() supaya MainActivity tidak perlu manual instantiate.
+    lifestyleViewModel: LifestyleViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
     var goals by remember { mutableStateOf(initialLifestyleGoals) }
     var isMenuExpanded by remember { mutableStateOf(false) }
+
+    val lifestyleUiState by lifestyleViewModel.uiState.collectAsState()
 
     val completedCount = remember(goals) { goals.count { it.done >= it.target } }
     val totalCount = goals.size
@@ -358,6 +377,19 @@ fun LifestyleScreen(
                         )
                     }
                 }
+
+                // 4. SLEEP INSIGHT SECTION (T-005 / FR-014)
+                // Generate rekomendasi personal (activities/foods/music) dari
+                // riwayat sleep_logs via Edge Function `generate-sleep-insight`.
+                SleepInsightCard(
+                    uiState = lifestyleUiState,
+                    onGenerate = { periodDays ->
+                        lifestyleViewModel.onGenerateInsight(periodDays)
+                    },
+                    onInfoMessageShown = lifestyleViewModel::onInfoMessageShown,
+                    onErrorShown = lifestyleViewModel::onErrorShown,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
 
             if (isMenuExpanded) {
@@ -379,6 +411,398 @@ fun LifestylePreview() {
         LifestyleScreen()
     }
 }
+
+// =============================================================================
+// SLEEP INSIGHT CARD (T-005 / FR-014)
+// =============================================================================
+// Rekomendasi personal (activities/foods/music) hasil Edge Function
+// `generate-sleep-insight` yang membaca `sleep_logs` 7-30 hari terakhir.
+//
+// State machine (lihat LifestyleUiState):
+//   - Idle       → CTA "Generate Insight" + helper text
+//   - Loading    → progress + "Menganalisis pola tidur..."
+//   - EmptyLogs  → CTA "Tambah log tidur dulu"
+//   - Loaded     → summary + 3 section (activities/foods/music)
+//   - Error      → pesan error + tombol coba lagi
+// =============================================================================
+
+/**
+ * Card utama Sleep Insight. Menerima state dari ViewModel + callback generate.
+ */
+@Composable
+private fun SleepInsightCard(
+    uiState: LifestyleUiState,
+    onGenerate: (Int) -> Unit,
+    onInfoMessageShown: () -> Unit,
+    onErrorShown: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // Snackbar handler untuk info & error message.
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(uiState.infoMessage) {
+        val msg = uiState.infoMessage ?: return@LaunchedEffect
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar(msg)
+            onInfoMessageShown()
+        }
+    }
+    LaunchedEffect(uiState.errorMessage) {
+        val msg = uiState.errorMessage ?: return@LaunchedEffect
+        coroutineScope.launch {
+            snackbarHostState.showSnackbar(msg)
+            onErrorShown()
+        }
+    }
+
+    Box(modifier = modifier) {
+        BaseCard(
+            modifier = Modifier.fillMaxWidth(),
+            radius = 20.dp,
+            padding = 16.dp,
+            testTag = "sleep_insight_card",
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                // Header
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Bedtime,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Text(
+                        text = "Sleep Insight",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Rekomendasi aktivitas, makanan & musik dari pola tidur Anda.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                when {
+                    // Loading state
+                    uiState.isGeneratingInsight -> {
+                        SleepInsightLoadingState()
+                    }
+                    // User belum punya log tidur
+                    uiState.showEmptyLogs -> {
+                        SleepInsightEmptyLogsState(
+                            message = uiState.emptyLogsMessage.orEmpty(),
+                        )
+                    }
+                    // Insight sudah ada
+                    uiState.insight != null -> {
+                        SleepInsightContent(
+                            insight = uiState.insight,
+                            onRefresh = { onGenerate(DEFAULT_PERIOD_DAYS) },
+                        )
+                    }
+                    // Error
+                    uiState.errorMessage != null -> {
+                        SleepInsightErrorState(
+                            message = uiState.errorMessage,
+                            onRetry = { onGenerate(DEFAULT_PERIOD_DAYS) },
+                        )
+                    }
+                    // Idle / empty state
+                    else -> {
+                        SleepInsightIdleState(
+                            onGenerate = { onGenerate(DEFAULT_PERIOD_DAYS) },
+                        )
+                    }
+                }
+            }
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
+}
+
+/** Window analisis default (hari). */
+private const val DEFAULT_PERIOD_DAYS = 7
+
+/** Idle state: CTA "Generate Insight" + helper text. */
+@Composable
+private fun SleepInsightIdleState(
+    onGenerate: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.AutoAwesome,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+            modifier = Modifier.size(36.dp),
+        )
+        Text(
+            text = "Belum ada insight. Generate rekomendasi personal dari 7 hari tidur terakhir Anda.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+        PrimaryButton(
+            text = "Generate Insight",
+            onClick = onGenerate,
+            modifier = Modifier.fillMaxWidth(),
+            testTag = "generate_insight_btn",
+        )
+    }
+}
+
+/** Loading state: progress indicator + helpful message. */
+@Composable
+private fun SleepInsightLoadingState(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        CircularProgressIndicator(
+            color = MaterialTheme.colorScheme.primary,
+            strokeWidth = 3.dp,
+        )
+        Text(
+            text = "Menganalisis pola tidur Anda...",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = "Proses ini bisa 5-10 detik (AI sedang menyusun rekomendasi).",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+    }
+}
+
+/** Empty logs state: CTA to add sleep logs first. */
+@Composable
+private fun SleepInsightEmptyLogsState(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Default.Bedtime,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(36.dp),
+        )
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+    }
+}
+
+/** Error state: message + retry button. */
+@Composable
+private fun SleepInsightErrorState(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            )
+        }
+        PrimaryButton(
+            text = "Coba Lagi",
+            onClick = onRetry,
+            modifier = Modifier.fillMaxWidth(),
+            testTag = "retry_insight_btn",
+        )
+    }
+}
+
+/** Loaded state: summary + 3 recommendation sections + refresh. */
+@Composable
+private fun SleepInsightContent(
+    insight: SleepInsightData,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        // Summary banner
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Lightbulb,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = insight.summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 20.sp,
+                )
+            }
+        }
+
+        // 3 recommendation sections
+        SleepInsightSection(
+            title = "Aktivitas",
+            icon = Icons.Default.DirectionsRun,
+            iconTint = Color(0xFF34D399), // Emerald
+            items = insight.recommendations.activities,
+            testTag = "insight_activities_section",
+        )
+        SleepInsightSection(
+            title = "Makanan & Minuman",
+            icon = Icons.Default.Restaurant,
+            iconTint = Color(0xFFFB923C), // Orange
+            items = insight.recommendations.foods,
+            testTag = "insight_foods_section",
+        )
+        SleepInsightSection(
+            title = "Musik Relaksasi",
+            icon = Icons.Default.MusicNote,
+            iconTint = Color(0xFFA78BFA), // Purple
+            items = insight.recommendations.music,
+            testTag = "insight_music_section",
+        )
+
+        // Period + refresh
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Berdasarkan ${insight.periodDays} hari terakhir",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(
+                onClick = onRefresh,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                modifier = Modifier.testTag("refresh_insight_btn"),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Refresh",
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "Refresh", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+/** Single recommendation section: icon + title + bullet list of items. */
+@Composable
+private fun SleepInsightSection(
+    title: String,
+    icon: ImageVector,
+    iconTint: Color,
+    items: List<SleepInsightItem>,
+    testTag: String,
+    modifier: Modifier = Modifier,
+) {
+    if (items.isEmpty()) return // defensive — schema guarantee 3-5, tapi guard saja
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(testTag),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconTint,
+                modifier = Modifier.size(20.dp),
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        }
+        items.forEach { item ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Text(
+                    text = "•",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = iconTint,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.width(16.dp),
+                )
+                Text(
+                    text = item.text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 20.sp,
+                )
+            }
+        }
+    }
+}
+
 
 /**
  * Data model for a single confetti particle in the milestone celebration effect.

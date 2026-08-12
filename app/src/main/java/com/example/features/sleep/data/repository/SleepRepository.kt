@@ -47,6 +47,18 @@ interface SleepRepository {
         userId: String,
         days: Int = 7,
     ): Result<List<DailySleepScore>>
+
+    /**
+     * Ambil log tidur milik [userId] dalam window [days] hari terakhir,
+     * diurutkan dari yang paling baru. Dipakai oleh pipeline Sleep Insight
+     * (T-005 / FR-014) — feed ke Edge Function `generate-sleep-insight`.
+     *
+     * @param days Window analisis (1..30). Edge function akan clamp ke range ini.
+     */
+    suspend fun getRecentSleepLogs(
+        userId: String,
+        days: Int,
+    ): Result<List<SleepLogRow>>
 }
 
 class SleepRepositoryImpl : SleepRepository {
@@ -68,6 +80,31 @@ class SleepRepositoryImpl : SleepRepository {
                     filter { eq("user_id", userId) }
                     order("created_at", Order.DESCENDING)
                     limit(limit)
+                }
+                .decodeList<SleepLogRow>()
+            Result.success(logs)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getRecentSleepLogs(
+        userId: String,
+        days: Int,
+    ): Result<List<SleepLogRow>> {
+        return try {
+            val cutoff = java.time.OffsetDateTime.now(java.time.ZoneOffset.UTC)
+                .minusDays(days.toLong())
+                .toString()
+            val logs = SupabaseClient.requireClient().postgrest["sleep_logs"]
+                .select {
+                    filter {
+                        eq("user_id", userId)
+                        gte("created_at", cutoff)
+                    }
+                    order("created_at", Order.DESCENDING)
                 }
                 .decodeList<SleepLogRow>()
             Result.success(logs)
