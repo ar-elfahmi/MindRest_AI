@@ -64,11 +64,13 @@ fun MindRestTheme(
     val spacing = Spacing()
     val elevation = Elevation()
     val shapes = Shapes()
+    val motion = Motion()
 
     CompositionLocalProvider(
         LocalSpacing provides spacing,
         LocalElevation provides elevation,
-        LocalShapes provides shapes
+        LocalShapes provides shapes,
+        LocalMotion provides motion
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

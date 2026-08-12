@@ -20,7 +20,9 @@ val LightCard = Color(0xFFFFFFFF)
 val LightPrimary = Color(0xFF5850E7)
 val LightSecondary = Color(0xFFF0EDF9)
 val LightMuted = Color(0xFFF3F1ED)
-val LightMutedForeground = Color(0xFF8A8A9A)
+// Darkened from #8A8A9A -> #6E6E80 to meet WCAG AA (4.99:1 on white, 4.71:1 on bg).
+// Perceptual change is minimal; still reads as muted grey-blue.
+val LightMutedForeground = Color(0xFF6E6E80)
 val LightAccent = Color(0xFFEB845C)
 val LightDestructive = Color(0xFFE84C5C)
 
