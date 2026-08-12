@@ -159,7 +159,11 @@ class JournalRepositoryImpl : JournalRepository {
     ): Result<ChatGeminiResponseData> {
         return try {
             val client = SupabaseClient.requireClient()
-            val accessToken = client.auth.currentSessionOrNull()?.accessToken
+            // supabase-kt otomatis menyertakan Authorization: Bearer <jwt> dari
+            // session aktif. Jangan tambah manual — Ktor akan merge dua header
+            // jadi 'Bearer a, Bearer b' dan EF akan reject dengan invalid_jwt.
+            // Lihat T-010 untuk root-cause analysis.
+            client.auth.currentSessionOrNull()
                 ?: return Result.failure(IllegalStateException("User not logged in"))
 
             val response: HttpResponse = client.functions.invoke(
@@ -168,9 +172,6 @@ class JournalRepositoryImpl : JournalRepository {
                     message = userMessage,
                     sessionId = sessionId,
                 ),
-                headers = Headers.build {
-                    append(HttpHeaders.Authorization, "Bearer $accessToken")
-                },
             )
 
             val rawBody = response.bodyAsText()
