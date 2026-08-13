@@ -39,6 +39,7 @@ import com.example.core.designsystem.FeatureJourney
 import com.example.core.designsystem.FeatureLifestyle
 import com.example.core.designsystem.FeatureRelaxation
 import com.example.core.designsystem.FeatureReminder
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
 import com.example.core.designsystem.NumberL
 import com.example.core.designsystem.NumberM
@@ -76,7 +77,7 @@ val sampleAchievements = listOf(
         isUnlocked = true,
         unlockedDate = "Unlocked Jul 20",
         xpReward = 200,
-        color = Color(0xFF7C72F5),
+        color = Color(0xFF7C72F5), // residual: matches colorScheme.primary but in data class (cannot reference MaterialTheme)
         steps = listOf(
             "Log sleep timing daily",
             "Keep bedtime variance within 30 mins",
@@ -181,7 +182,7 @@ val sampleAchievements = listOf(
         maxProgress = 30,
         isUnlocked = false,
         xpReward = 500,
-        color = Color(0xFFE8845C),
+        color = Color(0xFFE8845C), // residual: achievement coral color, no token
         steps = listOf(
             "Maintain daily sleep logs",
             "Synchronize sleep stats without missing a day",
@@ -213,6 +214,7 @@ fun AchievementsScreen(
     onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     var selectedCategory by remember { mutableStateOf("All") }
     var selectedAchievementForDetail by remember { mutableStateOf<Achievement?>(null) }
 
@@ -253,11 +255,11 @@ fun AchievementsScreen(
                 .fillMaxWidth()
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = spacing.screenHorizontal)
+                .padding(bottom = spacing.space6),
+            verticalArrangement = Arrangement.spacedBy(spacing.space4)
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(spacing.space1))
 
             // Hero Rest XP & Level Header Card
             AchievementHeroCard(
@@ -269,7 +271,7 @@ fun AchievementsScreen(
             // Category Filter Pills
             SectionLabel(text = "Categories", testTag = "category_section_label")
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(spacing.space2),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("achievement_category_pills")
@@ -284,7 +286,7 @@ fun AchievementsScreen(
                                 else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
                             )
                             .clickable { selectedCategory = category }
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .padding(horizontal = spacing.space4, vertical = spacing.space2)
                     ) {
                         Text(
                             text = category,
@@ -299,7 +301,7 @@ fun AchievementsScreen(
             // Achievements Grid / List
             SectionLabel(text = "Badges ($unlockedCount Unlocked)", testTag = "badges_section_label")
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(spacing.space3),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 filteredAchievements.forEach { achievement ->
@@ -327,6 +329,7 @@ private fun AchievementHeroCard(
     totalCount: Int,
     totalXp: Int
 ) {
+    val spacing = LocalSpacing.current
     val progress = unlockedCount.toFloat() / totalCount.coerceAtLeast(1)
     val animatedProgress by animateFloatAsState(
         targetValue = progress,
@@ -338,8 +341,8 @@ private fun AchievementHeroCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("achievement_hero_card"),
-        radius = 20.dp,
-        padding = 18.dp
+        radius = 20.dp, // residual: BaseCard intrinsic radius
+        padding = 18.dp // residual: no token for 18
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -349,17 +352,17 @@ private fun AchievementHeroCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(spacing.space3)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(48.dp) // residual: icon container size
                             .clip(CircleShape)
                             .background(
                                 Brush.linearGradient(
                                     listOf(
                                         MaterialTheme.colorScheme.primary,
-                                        Color(0xFFEB845C)
+                                        Color(0xFFEB845C) // residual: achievement coral color, no token
                                     )
                                 )
                             ),
@@ -369,7 +372,7 @@ private fun AchievementHeroCard(
                             imageVector = Icons.Default.EmojiEvents,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(26.dp) // residual: icon size
                         )
                     }
 
@@ -383,7 +386,7 @@ private fun AchievementHeroCard(
                         Text(
                             text = "$totalXp Rest XP Earned",
                             style = NumberM,
-                            fontSize = 13.sp,
+                            fontSize = 13.sp, // residual: no typography token
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -392,9 +395,9 @@ private fun AchievementHeroCard(
 
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(12.dp)) // residual: no shape token for 12
                         .background(SuccessColor.copy(alpha = 0.15f))
-                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                        .padding(horizontal = 10.dp, vertical = 6.dp) // residual: no token for 10/6
                 ) {
                     Text(
                         text = "Top 5% Rest",
@@ -405,7 +408,7 @@ private fun AchievementHeroCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.space4))
 
             // Overall Milestone Progress Bar
             Row(
@@ -425,24 +428,24 @@ private fun AchievementHeroCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(6.dp)) // residual: no token for 6
 
             LinearProgressIndicator(
                 progress = { animatedProgress },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
+                    .height(8.dp) // residual: progress bar height
                     .clip(CircleShape),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(10.dp)) // residual: no token for 10
 
             Text(
                 text = "Keep consistent bedtime habits to unlock the Golden Owl badge!",
                 style = MaterialTheme.typography.bodySmall,
-                fontSize = 11.sp,
+                fontSize = 11.sp, // residual: no typography token
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -454,6 +457,7 @@ private fun AchievementItemCard(
     achievement: Achievement,
     onClick: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     val isUnlocked = achievement.isUnlocked
     val pct = achievement.currentProgress.toFloat() / achievement.maxProgress.coerceAtLeast(1)
 
@@ -462,35 +466,35 @@ private fun AchievementItemCard(
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .testTag("achievement_item_${achievement.id}"),
-        radius = 16.dp,
-        padding = 14.dp
+        radius = 16.dp, // residual: BaseCard intrinsic radius
+        padding = 14.dp // residual: no token for 14
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp) // residual: no token for 14
         ) {
             // Emoji Box Badge Icon
             Box(
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .size(56.dp) // residual: icon container size
+                    .clip(RoundedCornerShape(16.dp)) // residual: shape
                     .background(
                         if (isUnlocked) achievement.color.copy(alpha = 0.15f)
                         else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                     )
                     .border(
-                        1.dp,
+                        1.dp, // residual: border stroke
                         if (isUnlocked) achievement.color.copy(alpha = 0.4f)
                         else MaterialTheme.colorScheme.outlineVariant,
-                        RoundedCornerShape(16.dp)
+                        RoundedCornerShape(16.dp) // residual: shape
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = achievement.emoji,
-                    fontSize = 28.sp,
-                    modifier = Modifier.padding(2.dp)
+                    fontSize = 28.sp, // residual: no typography token
+                    modifier = Modifier.padding(2.dp) // residual: no token for 2
                 )
                 if (!isUnlocked) {
                     Box(
@@ -503,7 +507,7 @@ private fun AchievementItemCard(
                             imageVector = Icons.Default.Lock,
                             contentDescription = "Locked",
                             tint = Color.White.copy(alpha = 0.9f),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp) // residual: icon size
                         )
                     }
                 }
@@ -524,23 +528,23 @@ private fun AchievementItemCard(
                         modifier = Modifier.weight(1f)
                     )
 
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(6.dp)) // residual: no token for 6
 
                     if (isUnlocked) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.space1)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
                                 tint = SuccessColor,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(14.dp) // residual: icon size
                             )
                             Text(
                                 text = "Unlocked",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: no typography token
                                 fontWeight = FontWeight.Bold,
                                 color = SuccessColor
                             )
@@ -549,31 +553,31 @@ private fun AchievementItemCard(
                         Text(
                             text = "+${achievement.xpReward} XP",
                             style = MaterialTheme.typography.labelSmall,
-                            fontSize = 11.sp,
+                            fontSize = 11.sp, // residual: no typography token
                             fontWeight = FontWeight.Bold,
                             color = achievement.color
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(2.dp)) // residual: no token for 2
 
                 Text(
                     text = achievement.description,
                     style = MaterialTheme.typography.bodySmall,
-                    fontSize = 11.sp,
+                    fontSize = 11.sp, // residual: no typography token
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 14.sp
+                    lineHeight = 14.sp // residual: no typography token
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(spacing.space2))
 
                 // Progress Bar or Unlocked Timestamp
                 if (isUnlocked) {
                     Text(
                         text = achievement.unlockedDate ?: "Unlocked",
                         style = MaterialTheme.typography.labelSmall,
-                        fontSize = 10.sp,
+                        fontSize = 10.sp, // residual: no typography token
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
@@ -585,23 +589,23 @@ private fun AchievementItemCard(
                             Text(
                                 text = "Progress",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: no typography token
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = "${achievement.currentProgress} / ${achievement.maxProgress}",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: no typography token
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(spacing.space1))
                         LinearProgressIndicator(
                             progress = { pct.coerceIn(0f, 1f) },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(6.dp)
+                                .height(6.dp) // residual: progress bar height
                                 .clip(CircleShape),
                             color = achievement.color,
                             trackColor = achievement.color.copy(alpha = 0.2f)
@@ -619,6 +623,7 @@ private fun AchievementDetailModal(
     achievement: Achievement,
     onDismiss: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -628,14 +633,14 @@ private fun AchievementDetailModal(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(spacing.space6)
                 .testTag("achievement_detail_modal"),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Large Animated Visual Badge
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(80.dp) // residual: icon container size
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
@@ -647,10 +652,10 @@ private fun AchievementDetailModal(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = achievement.emoji, fontSize = 40.sp)
+                Text(text = achievement.emoji, fontSize = 40.sp) // residual: no typography token
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.space4))
 
             Text(
                 text = achievement.title,
@@ -660,7 +665,7 @@ private fun AchievementDetailModal(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(spacing.space1))
 
             Badge(
                 text = achievement.category.uppercase(),
@@ -668,7 +673,7 @@ private fun AchievementDetailModal(
                 backgroundColor = achievement.color.copy(alpha = 0.15f)
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(spacing.space3))
 
             Text(
                 text = achievement.description,
@@ -677,15 +682,15 @@ private fun AchievementDetailModal(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(spacing.space5))
 
             // Checklist Steps
             BaseCard(
                 modifier = Modifier.fillMaxWidth(),
-                radius = 16.dp,
-                padding = 16.dp
+                radius = 16.dp, // residual: BaseCard intrinsic radius
+                padding = 16.dp // residual: BaseCard intrinsic padding
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) { // residual: no token for 10
                     Text(
                         text = "Milestone Criteria",
                         style = MaterialTheme.typography.titleSmall,
@@ -696,14 +701,14 @@ private fun AchievementDetailModal(
                     achievement.steps.forEachIndexed { index, step ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp) // residual: no token for 10
                         ) {
                             val isStepDone = achievement.isUnlocked || index < achievement.currentProgress
                             Icon(
                                 imageVector = if (isStepDone) Icons.Default.CheckCircle else Icons.Default.Star,
                                 contentDescription = null,
                                 tint = if (isStepDone) SuccessColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(18.dp) // residual: icon size
                             )
                             Text(
                                 text = step,
@@ -715,17 +720,17 @@ private fun AchievementDetailModal(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(spacing.space6))
 
             // Action Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(spacing.space3)
             ) {
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp)
+                    shape = RoundedCornerShape(14.dp) // residual: no shape token for 14
                 ) {
                     Text("Close")
                 }
@@ -733,20 +738,20 @@ private fun AchievementDetailModal(
                 Button(
                     onClick = { /* Share functionality mock */ },
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(14.dp), // residual: no shape token for 14
                     colors = ButtonDefaults.buttonColors(containerColor = achievement.color)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp) // residual: icon size
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(6.dp)) // residual: no token for 6
                     Text("Share Badge")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.space4))
         }
     }
 }
