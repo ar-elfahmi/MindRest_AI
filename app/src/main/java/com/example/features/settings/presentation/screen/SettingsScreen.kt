@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.core.designsystem.BodyFontFamily
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
 import com.example.core.designsystem.NumberFontFamily
 import com.example.core.designsystem.components.SectionLabel
@@ -35,6 +36,7 @@ fun SettingsScreen(
     toggleDark: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     // Local State
     var notif by remember { mutableStateOf(true) }
     var aiPersonal by remember { mutableStateOf(true) }
@@ -59,9 +61,9 @@ fun SettingsScreen(
                 .fillMaxWidth()
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = spacing.screenHorizontal, vertical = spacing.space4)
                 .testTag("settings_scroll_content"),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(spacing.space2)
         ) {
             // SettingsSection 0: Appearance
             Column {
@@ -133,7 +135,7 @@ fun SettingsScreen(
                         subtitle = "Help improve MindRest AI",
                         checked = dataShare,
                         onCheckedChange = { dataShare = !dataShare },
-                        activeColor = Color(0xFF34C98A), // Spec green active color
+                        activeColor = Color(0xFF34C98A), // residual: spec green active color, no token
                         testTag = "toggle_share_anonymous_data"
                     )
                 }
@@ -157,20 +159,20 @@ fun SettingsScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = spacing.space4)
                     .testTag("settings_footer"),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "MindRest AI v1.0.0",
                     fontFamily = NumberFontFamily,
-                    fontSize = 12.sp,
+                    fontSize = 12.sp, // residual: no typography token
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Made with ❤️ for mental wellness",
                     fontFamily = BodyFontFamily,
-                    fontSize = 12.sp,
+                    fontSize = 12.sp, // residual: no typography token
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -186,13 +188,14 @@ private fun SectionCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val spacing = LocalSpacing.current
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp)) // residual: shape
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
-            .padding(horizontal = 16.dp) // px-4 = 16dp horizontal only
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)) // residual: border stroke + shape
+            .padding(horizontal = spacing.space4) // px-4 = 16dp horizontal only
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -209,7 +212,7 @@ private fun SectionDivider() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(1.dp)
+            .height(1.dp) // residual: divider height
             .background(MaterialTheme.colorScheme.outlineVariant)
     )
 }
@@ -227,7 +230,7 @@ private fun AccountRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 14.dp)
+            .padding(vertical = 14.dp) // residual: no token for 14
             .testTag(testTag),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -235,7 +238,7 @@ private fun AccountRow(
         Text(
             text = item,
             fontFamily = BodyFontFamily,
-            fontSize = 14.sp,
+            fontSize = 14.sp, // residual: no typography token
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -243,7 +246,7 @@ private fun AccountRow(
             imageVector = Icons.Default.KeyboardArrowRight,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp) // residual: icon size
         )
     }
 }
