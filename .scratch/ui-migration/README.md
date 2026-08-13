@@ -55,8 +55,8 @@ complexity (pilot ringan dulu, heavy terakhir).
 | 07 | SleepTrackingScreen | ✅ done ⚠️ self-reviewed |
 | 08 | RelaxScreen | ✅ done |
 | 09 | AdvancedRelaxationScreen | ✅ done |
-| 10 | IkigaiDashboardScreen | ⬜ todo |
-| 11 | IkigaiReportScreen | ⬜ todo |
+| 10 | IkigaiDashboardScreen | ✅ done |
+| 11 | IkigaiReportScreen | ✅ done |
 | 12 | IkigaiAssessmentScreen | ⬜ todo |
 | 13 | IkigaiReportLoadingScreen | ⬜ todo |
 | 14 | StatisticsScreen | ⬜ todo |

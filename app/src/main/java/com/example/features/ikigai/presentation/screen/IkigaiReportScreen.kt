@@ -29,8 +29,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -68,6 +65,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppCard
+import com.example.core.designsystem.components.AppCardVariant
+import com.example.core.designsystem.components.AppScaffold
 import com.example.features.ikigai.data.dto.IkigaiCircles
 import com.example.features.ikigai.data.dto.IkigaiRecommendation
 import com.example.features.ikigai.data.repository.IkigaiReport
@@ -97,6 +98,7 @@ fun IkigaiReportScreen(
     viewModel: IkigaiReportViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val spacing = LocalSpacing.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Auto-trigger dari Assessment: fire-once saat screen pertama kali compose.
@@ -122,7 +124,7 @@ fun IkigaiReportScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -152,7 +154,6 @@ fun IkigaiReportScreen(
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         when {
             // INITIAL LOADING (first load, belum ada data)
@@ -175,8 +176,8 @@ fun IkigaiReportScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                        .padding(horizontal = spacing.screenHorizontal, vertical = spacing.screenTop),
+                    verticalArrangement = Arrangement.spacedBy(spacing.space5),
                 ) {
                     // Regenerating banner (kalau sedang trigger)
                     AnimatedVisibility(
@@ -210,7 +211,7 @@ fun IkigaiReportScreen(
                         )
                     }
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(spacing.space4))
                 }
             }
         }
@@ -248,23 +249,21 @@ private fun ReportHeader(report: IkigaiReport) {
 
 @Composable
 private fun GeneratingBanner() {
-    Card(
+    val spacing = LocalSpacing.current
+    AppCard(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-        ),
-        shape = RoundedCornerShape(12.dp),
+        variant = AppCardVariant.Tonal
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = spacing.space4, vertical = spacing.space3),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(spacing.space3),
         ) {
             CircularProgressIndicator(
-                modifier = Modifier.size(20.dp),
-                strokeWidth = 2.dp,
+                modifier = Modifier.size(20.dp), // residual: spinner size
+                strokeWidth = 2.dp, // residual: stroke
             )
             Column {
                 Text(
@@ -284,16 +283,20 @@ private fun GeneratingBanner() {
 
 @Composable
 private fun InitialLoadingPlaceholder(innerPadding: PaddingValues) {
+    val spacing = LocalSpacing.current
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
-            .padding(32.dp),
+            .padding(spacing.space8),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(modifier = Modifier.size(48.dp), strokeWidth = 3.dp)
-            Spacer(Modifier.height(16.dp))
+            CircularProgressIndicator(
+                modifier = Modifier.size(spacing.space12),
+                strokeWidth = 3.dp // residual: stroke
+            )
+            Spacer(Modifier.height(spacing.space4))
             Text(
                 text = "Memuat laporan...",
                 style = MaterialTheme.typography.bodyMedium,
@@ -308,42 +311,43 @@ private fun EmptyState(
     innerPadding: PaddingValues,
     onStartAssessment: () -> Unit,
 ) {
+    val spacing = LocalSpacing.current
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
-            .padding(32.dp),
+            .padding(spacing.space8),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(120.dp) // residual: icon intrinsic
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
             contentAlignment = Alignment.Center,
         ) {
             Text(text = "✨", style = MaterialTheme.typography.displayMedium)
         }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(spacing.space5))
         Text(
             text = "Belum ada laporan",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(spacing.space2))
         Text(
             text = "Selesaikan assessment 6 pertanyaan untuk mendapatkan laporan Ikigai personalmu.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(spacing.space6))
         Button(
             onClick = onStartAssessment,
-            shape = RoundedCornerShape(12.dp),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
+            shape = RoundedCornerShape(12.dp), // residual: no shapes token for 12
+            contentPadding = PaddingValues(horizontal = spacing.space6, vertical = 14.dp), // residual: no token for 14
             modifier = Modifier.testTag("btn_start_assessment"),
         ) {
             Text(
@@ -371,30 +375,28 @@ private fun EmptyState(
 private fun IkigaiCirclesCard(
     circles: IkigaiCircles,
 ) {
-    Card(
+    val spacing = LocalSpacing.current
+    AppCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        variant = AppCardVariant.Tonal
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column {
             Text(
                 text = "4 Lingkaran Ikigai",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.space3))
 
             // Canvas 4 lingkaran
             IkigaiFourCirclesCanvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp)
+                    .height(280.dp) // residual: canvas drawing height
                     .testTag("ikigai_circles_canvas"),
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.space4))
 
             // Legend list (4 item dengan warna)
             IkigaiCircleLegend(
@@ -424,6 +426,8 @@ private fun IkigaiCirclesCard(
 @Composable
 private fun IkigaiCircleLegend(label: String, value: String, color: Color) {
     if (value.isBlank()) return
+    // Residuals: vertical 6, top 6, size 10, width 10 — no design-system tokens
+    // for legend dot/padding micro-spacing; preserved as-is.
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -463,6 +467,7 @@ private object IkigaiCircleColors {
 
 @Composable
 private fun IkigaiFourCirclesCanvas(modifier: Modifier = Modifier) {
+    val spacing = LocalSpacing.current
     var animState by remember { mutableStateOf(0f) }
     val animatedProgress by animateFloatAsState(
         targetValue = animState,
@@ -481,7 +486,7 @@ private fun IkigaiFourCirclesCanvas(modifier: Modifier = Modifier) {
             val w = size.width
             val h = size.height
             // Inset supaya lingkaran punya ruang untuk label luar
-            val inset = 32.dp.toPx()
+            val inset = spacing.space8.toPx()
             val drawAreaW = w - inset * 2
             val drawAreaH = h - inset * 2
             val radius = minOf(drawAreaW, drawAreaH) * 0.34f
@@ -507,14 +512,14 @@ private fun IkigaiFourCirclesCanvas(modifier: Modifier = Modifier) {
                     color = color.copy(alpha = 0.85f),
                     radius = radius * animatedProgress,
                     center = center,
-                    style = Stroke(width = 2.dp.toPx()),
+                    style = Stroke(width = 2.dp.toPx()), // residual: stroke
                 )
             }
 
             // Draw intersection marker (dot center)
             drawCircle(
                 color = Color.Black.copy(alpha = 0.25f),
-                radius = 6.dp.toPx(),
+                radius = 6.dp.toPx(), // residual: dot radius (no token for 6)
                 center = Offset(cx, cy),
             )
 
@@ -522,15 +527,15 @@ private fun IkigaiFourCirclesCanvas(modifier: Modifier = Modifier) {
             val labelPaint = android.graphics.Paint().apply {
                 isAntiAlias = true
                 color = android.graphics.Color.BLACK
-                textSize = 12.sp.toPx()
+                textSize = 12.sp.toPx() // residual: sp for canvas paint
                 textAlign = android.graphics.Paint.Align.CENTER
                 isFakeBoldText = true
             }
             drawContext.canvas.nativeCanvas.apply {
-                drawText("CINTAI", cx, cy - radius * 1.4f - 4.dp.toPx(), labelPaint)
-                drawText("SKILL", cx + radius * 1.4f, cy + 4.dp.toPx(), labelPaint)
-                drawText("PROFESI", cx, cy + radius * 1.4f + 12.sp.toPx(), labelPaint)
-                drawText("MISI", cx - radius * 1.4f, cy + 4.dp.toPx(), labelPaint)
+                drawText("CINTAI", cx, cy - radius * 1.4f - spacing.space1.toPx(), labelPaint)
+                drawText("SKILL", cx + radius * 1.4f, cy + spacing.space1.toPx(), labelPaint)
+                drawText("PROFESI", cx, cy + radius * 1.4f + 12.sp.toPx(), labelPaint) // residual: sp
+                drawText("MISI", cx - radius * 1.4f, cy + spacing.space1.toPx(), labelPaint)
             }
         }
     }
@@ -603,21 +608,19 @@ private fun renderBoldText(text: String): AnnotatedString = buildAnnotatedString
 
 @Composable
 private fun MarkdownReportCard(markdown: String) {
+    val spacing = LocalSpacing.current
     val blocks = remember(markdown) { parseMarkdown(markdown) }
-    Card(
+    AppCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        ),
+        variant = AppCardVariant.Tonal
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+        Column {
             Text(
                 text = "Laporan",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(spacing.space3))
             blocks.forEach { block ->
                 when (block) {
                     is MarkdownBlock.Heading -> {
@@ -629,15 +632,18 @@ private fun MarkdownReportCard(markdown: String) {
                                 else -> MaterialTheme.typography.titleMedium
                             },
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                            modifier = Modifier.padding(
+                                top = spacing.space3,
+                                bottom = spacing.space1,
+                            ),
                         )
                     }
                     is MarkdownBlock.Paragraph -> {
                         Text(
                             text = renderBoldText(block.text),
                             style = MaterialTheme.typography.bodyMedium,
-                            lineHeight = 22.sp,
-                            modifier = Modifier.padding(vertical = 4.dp),
+                            lineHeight = 22.sp, // residual: lineHeight typography override
+                            modifier = Modifier.padding(vertical = spacing.space1),
                         )
                     }
                 }
@@ -655,7 +661,8 @@ private fun RecommendationsSection(
     recommendations: List<IkigaiRecommendation>,
     onToggle: (recId: String, done: Boolean) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val spacing = LocalSpacing.current
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.space3)) {
         Text(
             text = "Rekomendasi untukmu",
             style = MaterialTheme.typography.titleMedium,
@@ -673,8 +680,8 @@ private fun RecommendationsSection(
             progress = { progress },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(3.dp)),
+                .height(6.dp) // residual: bar height
+                .clip(RoundedCornerShape(3.dp)), // residual: bar radius
         )
 
         recommendations.forEach { rec ->
@@ -693,21 +700,20 @@ private fun RecommendationCard(
     done: Boolean,
     onToggle: (Boolean) -> Unit,
 ) {
-    Card(
+    val spacing = LocalSpacing.current
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("rec_card_${text.hashCode()}"),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (done)
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-            else MaterialTheme.colorScheme.surface,
-        ),
+        variant = AppCardVariant.Tonal
     ) {
+        // Note: AppCard.Tonal uses surface (loses the "done"-state primaryContainer
+        // tint that the original Card had). Done state is still conveyed by the
+        // Checkbox and onSurfaceVariant text color.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = spacing.space3, vertical = spacing.space2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(
@@ -715,11 +721,11 @@ private fun RecommendationCard(
                 onCheckedChange = onToggle,
                 modifier = Modifier.testTag("rec_checkbox"),
             )
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(spacing.space1))
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(end = 8.dp),
+                modifier = Modifier.padding(end = spacing.space2),
                 color = if (done) MaterialTheme.colorScheme.onSurfaceVariant
                         else MaterialTheme.colorScheme.onSurface,
             )
