@@ -9,7 +9,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Pause
@@ -27,7 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.core.designsystem.InfoColor
+import com.example.core.designsystem.LocalShapes
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
+import com.example.core.designsystem.components.AppScaffold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,16 +41,16 @@ fun AdvancedRelaxationScreen(
     var selectedMode by remember { mutableStateOf("Gerak") }
     var isPlaying by remember { mutableStateOf(false) }
 
+    val spacing = LocalSpacing.current
     val backgroundGradient = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFF001F3F), // Dark Navy
-            Color(0xFF000000)  // Black
+            Color(0xFF001F3F), // Immersive ambient navy (no flat token; like SleepHero gradient)
+            Color.Black
         )
     )
 
-    Scaffold(
+    AppScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
                 title = {
@@ -115,14 +118,14 @@ fun AdvancedRelaxationScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(spacing.space6))
 
                 // Dynamic Content Area
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
+                        .padding(horizontal = spacing.space6),
                     contentAlignment = Alignment.Center
                 ) {
                     when (selectedMode) {
@@ -144,6 +147,7 @@ fun AdvancedRelaxationScreen(
 
 @Composable
 private fun GerakContent() {
+    val spacing = LocalSpacing.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -153,7 +157,7 @@ private fun GerakContent() {
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(LocalShapes.current.md)
                 .background(Color.DarkGray),
             contentAlignment = Alignment.Center
         ) {
@@ -174,7 +178,7 @@ private fun GerakContent() {
             )
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(spacing.space4))
         
         Text(
             text = "Bedtime Stretch (10 Min)",
@@ -187,6 +191,7 @@ private fun GerakContent() {
 
 @Composable
 private fun NapasContent() {
+    val spacing = LocalSpacing.current
     var isHapticSyncEnabled by remember { mutableStateOf(true) }
     
     // Breathing Animation
@@ -214,8 +219,8 @@ private fun NapasContent() {
                 .background(
                     Brush.radialGradient(
                         colors = listOf(
-                            Color(0x884FC3F7),
-                            Color(0x004FC3F7)
+                            InfoColor.copy(alpha = 0.53f),
+                            InfoColor.copy(alpha = 0f)
                         )
                     )
                 ),
@@ -225,15 +230,15 @@ private fun NapasContent() {
                 modifier = Modifier
                     .size(100.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF4FC3F7))
+                    .background(InfoColor)
             )
         }
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(spacing.space12))
         
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(spacing.space3)
         ) {
             Text(
                 text = "Haptic Feedback Sync",
@@ -246,7 +251,7 @@ private fun NapasContent() {
                 onCheckedChange = { isHapticSyncEnabled = it },
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF4FC3F7)
+                    checkedTrackColor = InfoColor
                 )
             )
         }
@@ -255,6 +260,7 @@ private fun NapasContent() {
 
 @Composable
 private fun SuaraContent() {
+    val spacing = LocalSpacing.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize()
@@ -264,13 +270,13 @@ private fun SuaraContent() {
             style = MaterialTheme.typography.titleMedium,
             color = Color.White,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier.padding(bottom = spacing.space8)
         )
         
         AudioMixerRow(label = "Hujan Gerimis", initialValue = 0.7f)
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(spacing.space6))
         AudioMixerRow(label = "Binaural Theta", initialValue = 0.4f)
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(spacing.space6))
         AudioMixerRow(label = "Api Unggun", initialValue = 0f)
     }
 }
@@ -292,7 +298,7 @@ private fun AudioMixerRow(label: String, initialValue: Float) {
             onValueChange = { sliderValue = it },
             colors = SliderDefaults.colors(
                 thumbColor = Color.White,
-                activeTrackColor = Color(0xFF4FC3F7),
+                activeTrackColor = InfoColor,
                 inactiveTrackColor = Color.White.copy(alpha = 0.3f)
             )
         )
@@ -304,10 +310,11 @@ private fun MasterControls(
     isPlaying: Boolean,
     onPlayPauseToggle: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(24.dp),
+            .padding(spacing.space6),
         contentAlignment = Alignment.Center
     ) {
         IconButton(
