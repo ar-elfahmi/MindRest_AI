@@ -16,7 +16,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -26,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppScaffold
 
 /**
  * Placeholder loading screen — di-navigate setelah user submit assessment.
@@ -41,7 +42,8 @@ import androidx.compose.ui.unit.sp
 fun IkigaiReportLoadingScreen(
     onNavigateBack: () -> Unit = {},
 ) {
-    Scaffold(
+    val spacing = LocalSpacing.current
+    AppScaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Generating Report") },
@@ -57,7 +59,7 @@ fun IkigaiReportLoadingScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(spacing.space8),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -65,21 +67,21 @@ fun IkigaiReportLoadingScreen(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                CircularProgressIndicator(modifier = Modifier.size(64.dp), strokeWidth = 4.dp)
-                Spacer(Modifier.height(24.dp))
+                CircularProgressIndicator(modifier = Modifier.size(64.dp), strokeWidth = 4.dp) // residual: spinner size + stroke
+                Spacer(Modifier.height(spacing.space6))
                 Text(
                     text = "Menyusun laporan Ikigai kamu...",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(spacing.space2))
                 Text(
                     text = "AI sedang menganalisis jawabanmu.\nLaporan akan muncul di sini segera.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    fontSize = 14.sp,
+                    fontSize = 14.sp, // residual: bodyMedium is 16sp here; override to 14sp preserves original size
                 )
             }
         }
