@@ -57,6 +57,7 @@ fun ReminderScreen(
     modifier: Modifier = Modifier,
     viewModel: ReminderViewModel = viewModel()
 ) {
+    val spacing = LocalSpacing.current
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val state by viewModel.uiState.collectAsState()
@@ -92,7 +93,7 @@ fun ReminderScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             TopBar(
                 title = "Reminder Settings",
@@ -107,28 +108,28 @@ fun ReminderScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(spacing.space4),
+            verticalArrangement = Arrangement.spacedBy(spacing.space5)
         ) {
             // Permission Banner (Android 13+ only)
             if (!hasNotificationPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 BaseCard(
-                    radius = 16.dp,
-                    padding = 16.dp,
+                    radius = 16.dp, // residual: BaseCard intrinsic radius
+                    padding = 16.dp, // residual: BaseCard intrinsic padding
                     modifier = Modifier.background(
                         color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(16.dp)
+                        shape = RoundedCornerShape(16.dp) // residual: shape
                     ),
                     testTag = "permission_card"
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(spacing.space2)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.NotificationsActive,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.error
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(spacing.space2))
                             Text(
                                 text = "Notification Permission Required",
                                 style = MaterialTheme.typography.titleSmall,
@@ -144,7 +145,7 @@ fun ReminderScreen(
                         PrimaryButton(
                             text = "Grant Permission",
                             onClick = { permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS) },
-                            modifier = Modifier.fillMaxWidth().height(36.dp)
+                            modifier = Modifier.fillMaxWidth().height(36.dp) // residual: button height
                         )
                     }
                 }
@@ -152,11 +153,11 @@ fun ReminderScreen(
 
             // === 1. Bedtime Wind-Down Notification Card ===
             BaseCard(
-                radius = 20.dp,
-                padding = 16.dp,
+                radius = 20.dp, // residual: BaseCard intrinsic radius
+                padding = 16.dp, // residual: BaseCard intrinsic padding
                 testTag = "bedtime_scheduler_card"
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) { // residual: no token for 14
                     // Header
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -166,10 +167,10 @@ fun ReminderScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
+                                    .size(40.dp) // residual: icon container size
                                     .background(
                                         MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                        shape = RoundedCornerShape(12.dp)
+                                        shape = RoundedCornerShape(12.dp) // residual: shape
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -179,7 +180,7 @@ fun ReminderScreen(
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(spacing.space3))
                             Column {
                                 Text(
                                     text = "Bedtime Wind-Down Prompt",
@@ -230,7 +231,7 @@ fun ReminderScreen(
                     // Action buttons
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.space3)
                     ) {
                         PrimaryButton(
                             text = "Simpan Pengingat",
@@ -328,11 +329,11 @@ fun ReminderScreen(
 
             // === 2. Additional Mindful Routine Reminders (out of scope T-009) ===
             BaseCard(
-                radius = 20.dp,
-                padding = 16.dp,
+                radius = 20.dp, // residual: BaseCard intrinsic radius
+                padding = 16.dp, // residual: BaseCard intrinsic padding
                 testTag = "routine_reminders_card"
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.space3)) {
                     SectionLabel(text = "Daily Routine Reminders")
 
                     ToggleRow(
@@ -379,9 +380,10 @@ private fun TimeStepperRow(
     onMinuteChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(spacing.space4),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Jam
@@ -421,16 +423,17 @@ private fun TimeStepperColumn(
     onDecrement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(spacing.space1)
     ) {
         // Up button
         IconButton(
             onClick = onIncrement,
             modifier = Modifier
-                .size(36.dp)
+                .size(36.dp) // residual: icon button size
                 .background(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(50)
@@ -444,9 +447,9 @@ private fun TimeStepperColumn(
         }
         // Value display
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(12.dp), // residual: shape
             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-            modifier = Modifier.fillMaxWidth().height(48.dp)
+            modifier = Modifier.fillMaxWidth().height(48.dp) // residual: value display height
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Text(
@@ -462,7 +465,7 @@ private fun TimeStepperColumn(
         IconButton(
             onClick = onDecrement,
             modifier = Modifier
-                .size(36.dp)
+                .size(36.dp) // residual: icon button size
                 .background(
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(50)
