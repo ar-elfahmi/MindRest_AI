@@ -11,7 +11,7 @@ REM   1. Builds :app:assembleDebug from your CURRENT branch/HEAD
 REM      (Tip: run `git checkout main` first if you want latest main)
 REM   2. Launches the Pixel_3a emulator (lightweight, ~1.5GB)
 REM      if not already running; reuses it if it is
-REM   3. Waits for full boot
+REM   3. Waits for full boot (max ~120 detik)
 REM   4. Installs the fresh APK
 REM   5. Launches MainActivity
 REM
@@ -23,62 +23,115 @@ REM   - hw.cpu.ncore = 2
 REM   - audioInput = no
 REM ============================================================
 
-setlocal
-set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
-set PATH=%JAVA_HOME%\bin;%PATH%
-set ADB=C:\Users\lenovo\AppData\Local\Android\Sdk\platform-tools\adb.exe
-set EMU=C:\Users\lenovo\AppData\Local\Android\Sdk\emulator\emulator.exe
-set AVD=Pixel_3a
-set ANDROID_AVD_HOME=C:\Users\lenovo\.android\avd
-set PKG=com.aistudio.mindrest.eedcdb
+chcp 65001 >nul
+setlocal enabledelayedexpansion
 
-cd /d C:\laragon\www\MindRest_AI
+rem ====== KONFIGURASI ======
+set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
+set "ANDROID_SDK=%LOCALAPPDATA%\Android\Sdk"
+set "ADB=%ANDROID_SDK%\platform-tools\adb.exe"
+set "EMU=%ANDROID_SDK%\emulator\emulator.exe"
+set "GRADLE=%~dp0gradlew.bat"
+set "AVD=Pixel_3a"
+set "APK=%~dp0app\build\outputs\apk\debug\app-debug.apk"
+set "PKG=com.aistudio.mindrest.eedcdb"
+set "PATH=%JAVA_HOME%\bin;%PATH%"
 
+cd /d "%~dp0"
+
+echo ============================================
+echo   MindRest AI  -  Build + Run (current HEAD)
+echo ============================================
 echo.
-echo === [1/4] Build APK from current HEAD ===
-echo       (run `git checkout main` first if you want latest main)
-echo.
-call gradlew.bat :app:assembleDebug --console=plain
+
+rem -----------------------------------------------------------
+rem 1) Build APK incremental
+rem -----------------------------------------------------------
+echo [*] Build APK dari HEAD saat ini...
+"%GRADLE%" :app:assembleDebug --console=plain
 if errorlevel 1 (
-  echo BUILD FAILED.
+  echo.
+  echo [X] BUILD GAGAL.
+  pause
   exit /b 1
 )
 
+if not exist "%APK%" (
+  echo [X] APK tidak ditemukan: %APK%
+  pause
+  exit /b 1
+)
+echo [v] Build sukses, APK ready.
 echo.
-echo === [2/4] Check emulator ===
-%ADB% devices | findstr "emulator" >nul
+
+rem -----------------------------------------------------------
+rem 2) Pastikan emulator jalan (subroutine :WaitForBoot)
+rem -----------------------------------------------------------
+"%ADB%" devices | findstr "emulator-" >nul
 if errorlevel 1 (
-  echo       no emulator running - launching Pixel_3a ^(lightweight^)
-  echo       flags: -gpu host -memory 1536 -no-boot-anim
-  start "" "%EMU%" -avd %AVD% -gpu host -memory 1536 -no-boot-anim
-  echo       waiting for device to register...
-  %ADB% wait-for-device
-  echo       waiting for full boot ^(
-  :WAIT_BOOT
-  timeout /t 5 >nul
-  for /f "delims=" %%i in ('%ADB% shell getprop sys.boot_completed') do set BC=%%i
-  set BC=%BC: =%
-  if not "%BC%"=="1" goto WAIT_BOOT
-  echo       boot complete.
+  echo [*] Emulator belum jalan. Memulai %AVD% ...
+  start "" "%EMU%" -avd %AVD% -gpu host -no-boot-anim -no-snapshot
+  call :WaitForBoot
 ) else (
-  echo       emulator already running - reusing.
+  echo [v] Emulator sudah berjalan.
 )
-
 echo.
-echo === [3/4] Install APK ===
-%ADB% install -r app\build\outputs\apk\debug\app-debug.apk
+
+rem -----------------------------------------------------------
+rem 3) Install APK
+rem -----------------------------------------------------------
+echo [*] Install APK baru...
+"%ADB%" install -r "%APK%"
 if errorlevel 1 (
-  echo INSTALL FAILED.
+  echo [X] INSTALL GAGAL.
+  pause
+  exit /b 1
+)
+echo [v] Install sukses.
+echo.
+
+rem -----------------------------------------------------------
+rem 4) Launch aplikasi
+rem -----------------------------------------------------------
+echo [*] Membuka aplikasi...
+"%ADB%" shell am start -n "%PKG%/com.example.MainActivity"
+echo.
+
+echo ============================================
+echo  DONE. Emulator window has the app open.
+echo  Test keyboard: click a text field, then type on laptop.
+echo ============================================
+echo.
+pause
+endlocal
+exit /b 0
+
+rem ============================================================
+rem Subroutine : WaitForBoot
+rem   Tunggu device register, lalu tunggu sys.boot_completed=1.
+rem   Timeout 120 detik, lalu abort.
+rem ============================================================
+:WaitForBoot
+echo [*] Menunggu device register ...
+"%ADB%" wait-for-device
+if errorlevel 1 (
+  echo [X] Gagal register device.
   exit /b 1
 )
 
-echo.
-echo === [4/4] Launch MainActivity ===
-%ADB% shell am start -n "%PKG%/com.example.MainActivity"
-
-echo.
-echo ============================================================
-echo  Done. Emulator window has the app open.
-echo  Test keyboard: click a text field, then type on laptop.
-echo ============================================================
-endlocal
+set /a BOOT_COUNT=0
+:WAITLOOP
+set /a BOOT_COUNT+=1
+"%ADB%" shell getprop sys.boot_completed 2>nul | findstr "1" >nul
+if errorlevel 1 (
+  if !BOOT_COUNT! GEQ 60 (
+    echo [X] Boot timeout setelah 120 detik.
+    echo     Coba start manual atau pakai AVD lebih ringan.
+    pause
+    exit /b 1
+  )
+  timeout /t 2 /nobreak >nul
+  goto WAITLOOP
+)
+echo [v] Emulator boot selesai.
+exit /b 0
