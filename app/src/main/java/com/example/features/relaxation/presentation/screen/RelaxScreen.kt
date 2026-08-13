@@ -25,6 +25,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppCard
+import com.example.core.designsystem.components.AppCardVariant
+import com.example.core.designsystem.components.AppScaffold
+import com.example.core.designsystem.components.screenEdgeValues
 import com.example.features.relaxation.presentation.state.RelaxCategory
 import com.example.features.relaxation.presentation.state.RelaxMediaItem
 import com.example.features.relaxation.presentation.viewmodel.RelaxViewModel
@@ -49,6 +54,7 @@ fun RelaxScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val spacing = LocalSpacing.current
 
     // Group items by category
     val groupedItems = uiState.mediaItems.groupBy { it.category }
@@ -84,7 +90,7 @@ fun RelaxScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Relaxation") },
@@ -98,9 +104,9 @@ fun RelaxScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(innerPadding),
+            contentPadding = screenEdgeValues(),
+            verticalArrangement = Arrangement.spacedBy(spacing.space4)
         ) {
             // Now-playing bar (visible kalau ada currentItem)
             uiState.currentItemId?.let { currentId ->
@@ -126,7 +132,7 @@ fun RelaxScreen(
                             text = category.displayName,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 8.dp)
+                            modifier = Modifier.padding(vertical = spacing.space2)
                         )
                     }
 
@@ -152,18 +158,15 @@ private fun NowPlayingBar(
     onStop: () -> Unit,
     onSeek: (Long) -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+    val spacing = LocalSpacing.current
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        variant = AppCardVariant.Elevated,
+        contentPadding = spacing.space4
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(spacing.space2)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -173,13 +176,13 @@ private fun NowPlayingBar(
                     Text(
                         text = "Sedang Diputar",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
                         text = currentTitle,
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -187,7 +190,7 @@ private fun NowPlayingBar(
                     Icon(
                         imageVector = Icons.Default.Stop,
                         contentDescription = "Stop",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -207,12 +210,12 @@ private fun NowPlayingBar(
                 Text(
                     text = formatMs(uiState.playbackPositionMs),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = formatMs(uiState.durationMs),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -226,16 +229,13 @@ fun RelaxMediaCard(
     onPlayClicked: () -> Unit,
     onPauseClicked: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    val spacing = LocalSpacing.current
+    AppCard(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = spacing.space2
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Placeholder thumbnail
@@ -252,7 +252,7 @@ fun RelaxMediaCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(spacing.space4))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
