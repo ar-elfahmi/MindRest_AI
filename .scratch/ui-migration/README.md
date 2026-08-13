@@ -65,7 +65,7 @@ complexity (pilot ringan dulu, heavy terakhir).
 | 17 | ReminderScreen | ✅ done |
 | 18 | AiJournalScreen | ✅ done |
 | 19 | NotificationScreen | ✅ done |
-| 20 | SettingsScreen | ⬜ todo |
+| 20 | SettingsScreen | ✅ done |
 
 Legend: ⬜ todo · 🟡 in-progress · ✅ done · ⛔ blocked
 
