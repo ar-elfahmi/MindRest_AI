@@ -60,7 +60,7 @@ complexity (pilot ringan dulu, heavy terakhir).
 | 12 | IkigaiAssessmentScreen | ✅ done |
 | 13 | IkigaiReportLoadingScreen | ✅ done |
 | 14 | StatisticsScreen | ✅ done |
-| 15 | LifestyleScreen | ⬜ todo |
+| 15 | LifestyleScreen | ✅ done |
 | 16 | AchievementsScreen | ⬜ todo |
 | 17 | ReminderScreen | ⬜ todo |
 | 18 | AiJournalScreen | ⬜ todo |
