@@ -281,7 +281,9 @@ private fun ActionCard(
     val spacing = LocalSpacing.current
     AppCard(
         modifier = Modifier.width(260.dp), // residual: ActionCard intrinsic width
-        variant = AppCardVariant.Tonal
+        // Outlined: tambah border 1dp (outline alpha 0.3) agar card 'pop'
+        // dari background. Tonal terlalu subtle — card nge-blend dengan bg.
+        variant = AppCardVariant.Outlined
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(spacing.space4)
