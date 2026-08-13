@@ -17,7 +17,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
+import com.example.core.designsystem.components.AppScaffold
 
 data class NotificationItemData(
     val id: String,
@@ -34,6 +36,7 @@ fun NotificationScreen(
     onNavigateToReminderSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val notifications = listOf(
         NotificationItemData(
             id = "1",
@@ -50,9 +53,8 @@ fun NotificationScreen(
         )
     )
 
-    Scaffold(
+    AppScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -101,8 +103,8 @@ fun NotificationScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(spacing.space4),
+                    verticalArrangement = Arrangement.spacedBy(spacing.space3)
                 ) {
                     items(notifications, key = { it.id }) { item ->
                         NotificationItemCard(item = item)
@@ -118,6 +120,7 @@ fun NotificationItemCard(
     item: NotificationItemData,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     val containerColor = if (item.isUnread) {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
     } else {
@@ -126,16 +129,16 @@ fun NotificationItemCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(16.dp), // residual: shape (Card kept because containerColor varies by isUnread)
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // residual: zero elevation
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(spacing.space4),
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -146,11 +149,11 @@ fun NotificationItemCard(
                     if (item.isUnread) {
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(8.dp) // residual: unread indicator dot
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(spacing.space2))
                     }
                     Text(
                         text = item.title,
@@ -158,17 +161,17 @@ fun NotificationItemCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
-                
+
                 if (item.text != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(spacing.space1))
                     Text(
                         text = item.text,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                
-                Spacer(modifier = Modifier.height(8.dp))
+
+                Spacer(modifier = Modifier.height(spacing.space2))
                 
                 Text(
                     text = item.time,
