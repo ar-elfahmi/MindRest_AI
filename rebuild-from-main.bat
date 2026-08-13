@@ -3,20 +3,20 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 rem ================================================================
-rem   MindRest AI  -  Build + Deploy ke Emulator
+rem   MindRest AI  -  Rebuild APK From Zero (latest main)
 rem
 rem   Tujuan:
-rem     1. Kill stale Gradle daemon (cegah hang/crash)
-rem     2. Pastikan emulator hidup + boot selesai
-rem     3. Build APK incremental dari source code lokal TERBARU
-rem     4. Force-stop app lama (cegah force-close dari running state)
-rem     5. Install APK baru + launch
+rem     1. Sync ke main terbaru (git fetch + checkout + pull --rebase)
+rem     2. Wipe build cache (gradlew clean)
+rem     3. Build APK dari 0 dengan --rerun-tasks --no-build-cache
+rem     4. Force-stop app + install ulang + launch
 rem
-rem   Penting:
-rem     - TIDAK pakai --rerun-tasks (overkill, bisa trigger daemon crash)
-rem     - TIDAK clean build cache (boros waktu, sumber force-close memory)
-rem     - Pakai incremental build: Gradle auto-detect source change
-rem     - Pakai :app:assembleDebug (cuma rebuild app, bukan semua module)
+rem   CATATAN:
+rem     - Script ini AKAN checkout paksa ke main.
+rem       Kalau Anda di branch lain dengan uncommitted work,
+rem       commit dulu atau stash sebelum run.
+rem     - Cold rebuild butuh ~3-5 menit (vs incremental 30-90 detik).
+rem     - Menggantikan: build.bat, deploy.bat, run.bat, scripts/run-quiet.bat
 rem ================================================================
 
 rem ====== KONFIGURASI ======
@@ -25,19 +25,69 @@ set "ANDROID_SDK=%LOCALAPPDATA%\Android\Sdk"
 set "ADB=%ANDROID_SDK%\platform-tools\adb.exe"
 set "EMU=%ANDROID_SDK%\emulator\emulator.exe"
 set "GRADLE=%~dp0gradlew.bat"
-set "AVD=Pixel_10"
+set "AVD=Pixel_3a"
 set "APK=%~dp0app\build\outputs\apk\debug\app-debug.apk"
 set "PKG=com.aistudio.mindrest.eedcdb"
 set "PATH=%JAVA_HOME%\bin;%PATH%"
 
 echo ============================================
-echo   MindRest AI  -  Build + Deploy
+echo   MindRest AI  -  Rebuild From Main (Zero)
 echo ============================================
 echo.
 
 rem -----------------------------------------------------------
-rem 0) Kill stale Gradle daemon
-rem    Mencegah hang/crash dari daemon lama yang masih jalan
+rem 0) Safety: cek working tree tracked bersih
+rem    Untracked files OK (artefak kerja, .env, dst.)
+rem    Kalau tracked ada modifikasi, abort supaya tidak hilang
+rem -----------------------------------------------------------
+echo [*] Checking working tree (tracked files)...
+git diff --quiet HEAD
+if errorlevel 1 (
+  echo [X] Ada modifikasi tracked yang belum di-commit.
+  echo     Commit atau stash dulu, lalu run ulang.
+  echo.
+  git status --short
+  pause
+  exit /b 1
+)
+echo [v] Working tree bersih (tracked).
+echo.
+
+rem -----------------------------------------------------------
+rem 1) Sync ke main terbaru
+rem -----------------------------------------------------------
+echo [*] Fetch origin main ...
+git fetch origin main
+if errorlevel 1 (
+  echo [X] Gagal fetch dari origin.
+  pause
+  exit /b 1
+)
+
+echo [*] Checkout main ...
+git checkout main
+if errorlevel 1 (
+  echo [X] Gagal checkout main.
+  pause
+  exit /b 1
+)
+
+echo [*] Pull --rebase origin main ...
+git pull --rebase origin main
+if errorlevel 1 (
+  echo [X] Gagal pull --rebase. Mungkin ada konflik.
+  echo     Resolve manual lalu run ulang.
+  pause
+  exit /b 1
+)
+
+for /f "delims=" %%H in ('git rev-parse --short HEAD') do set "HEAD_HASH=%%H"
+for /f "delims=" %%S in ('git log -1 --format^=%%s') do set "HEAD_SUBJ=%%S"
+echo [v] Sekarang di main @ %HEAD_HASH% - %HEAD_SUBJ%
+echo.
+
+rem -----------------------------------------------------------
+rem 2) Kill stale Gradle daemon
 rem -----------------------------------------------------------
 echo [*] Membersihkan Gradle daemon stale...
 "%GRADLE%" --stop 2>nul
@@ -46,13 +96,13 @@ echo [v] Done.
 echo.
 
 rem -----------------------------------------------------------
-rem 1) Pastikan emulator jalan
-rem    Max 120 detik boot timeout, supaya tidak loop forever
+rem 3) Pastikan emulator jalan
+rem    Max 120 detik boot timeout
 rem -----------------------------------------------------------
 "%ADB%" devices | findstr "emulator-" >nul
 if errorlevel 1 (
   echo [*] Emulator belum jalan. Memulai %AVD% ...
-  start "" /B "%EMU%" -avd %AVD% -no-boot-anim -netdelay none -netspeed full
+  start "" /B "%EMU%" -avd %AVD% -gpu host -memory 1536 -no-boot-anim -netdelay none -netspeed full
   echo [*] Menunggu device ready (maks 120 detik)...
   "%ADB%" wait-for-device
   set /a BOOT_COUNT=0
@@ -76,15 +126,26 @@ if errorlevel 1 (
 echo.
 
 rem -----------------------------------------------------------
-rem 2) Build APK (incremental dari source code lokal terbaru)
-rem    Gradle otomatis deteksi source yang berubah dari file mtime.
-rem    Output: app\build\outputs\apk\debug\app-debug.apk
+rem 4) Clean build cache (rebuild dari 0)
 rem -----------------------------------------------------------
-echo [*] Build APK incremental :app:assembleDebug ...
-echo     ^> Gradle akan skip task yang source-nya tidak berubah
-echo     ^> Estimate: 30-90 detik (incremental), 2-4 menit (cold)
+echo [*] Clean build cache ...
+"%GRADLE%" clean --console=plain
+if errorlevel 1 (
+  echo [X] Gagal clean.
+  pause
+  exit /b 1
+)
+echo [v] Clean selesai.
+echo.
+
+rem -----------------------------------------------------------
+rem 5) Build APK dari 0 dengan --rerun-tasks --no-build-cache
+rem    Estimate: 3-5 menit (cold rebuild)
+rem -----------------------------------------------------------
+echo [*] Build APK dari 0 (:app:assembleDebug --rerun-tasks --no-build-cache) ...
+echo     ^> Estimate: 3-5 menit (cold rebuild)
 cd /d "%~dp0"
-"%GRADLE%" :app:assembleDebug --console=plain
+"%GRADLE%" :app:assembleDebug --rerun-tasks --no-build-cache --console=plain
 if errorlevel 1 (
   echo.
   echo [X] BUILD GAGAL. Periksa error di atas.
@@ -95,7 +156,7 @@ echo [v] Build sukses.
 echo.
 
 rem -----------------------------------------------------------
-rem 3) Verify APK exists
+rem 6) Verify APK exists
 rem    Kadang Gradle return success tapi APK tidak ter-generate
 rem -----------------------------------------------------------
 if not exist "%APK%" (
@@ -108,7 +169,7 @@ echo [v] APK ready: %APK%
 echo.
 
 rem -----------------------------------------------------------
-rem 4) Force-stop app lama sebelum install
+rem 7) Force-stop app lama sebelum install
 rem    Kalau app sedang jalan lalu di-install ulang, kadang
 rem    trigger force-close tiba-tiba karena file conflict.
 rem -----------------------------------------------------------
@@ -118,11 +179,11 @@ echo [v] Done.
 echo.
 
 rem -----------------------------------------------------------
-rem 5) Install APK baru (replace existing)
-rem    -r = replace; tanpa uninstall supaya data user (preferences,
-rem    session login) tidak hilang.
+rem 8) Install APK baru (replace existing)
+rem    -r = replace; tanpa uninstall supaya data user
+rem    (preferences, session login) tidak hilang.
 rem -----------------------------------------------------------
-echo [*] Install APK...
+echo [*] Install APK baru...
 "%ADB%" install -r "%APK%"
 if errorlevel 1 (
   echo [X] INSTALL GAGAL.
@@ -134,18 +195,20 @@ echo [v] Install sukses.
 echo.
 
 rem -----------------------------------------------------------
-rem 6) Launch aplikasi
+rem 9) Launch aplikasi
 rem -----------------------------------------------------------
 echo [*] Membuka aplikasi...
 "%ADB%" shell monkey -p %PKG% -c android.intent.category.LAUNCHER 1 >nul
 echo.
 
 echo ============================================
-echo  SELESAI!
+echo  REBUILD SELESAI!
 echo ============================================
-echo APK : %APK%
-echo PKG : %PKG%
-echo AVD : %AVD%
+echo  Branch : main @ %HEAD_HASH%
+echo  Subject: %HEAD_SUBJ%
+echo  APK    : %APK%
+echo  Package: %PKG%
+echo  AVD    : %AVD%
 echo.
 pause
 endlocal
