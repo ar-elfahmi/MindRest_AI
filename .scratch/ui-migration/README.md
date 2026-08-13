@@ -52,7 +52,7 @@ complexity (pilot ringan dulu, heavy terakhir).
 | 04 | JournalHistoryScreen | ✅ done |
 | 05 | JournalScreen | ✅ done |
 | 06 | SleepHubScreen | ✅ done |
-| 07 | SleepTrackingScreen | 🟡 in-progress |
+| 07 | SleepTrackingScreen | ✅ done ⚠️ self-reviewed |
 | 08 | RelaxScreen | ⬜ todo |
 | 09 | AdvancedRelaxationScreen | ⬜ todo |
 | 10 | IkigaiDashboardScreen | ⬜ todo |

@@ -16,6 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppCard
+import com.example.core.designsystem.components.AppScaffold
+import com.example.core.designsystem.components.screenEdgePadded
 import com.example.features.sleep.presentation.state.SleepQuality
 import com.example.features.sleep.presentation.viewmodel.SleepViewModel
 
@@ -27,6 +31,7 @@ fun SleepTrackingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val spacing = LocalSpacing.current
 
     val timeRegex = remember { Regex("^([01]\\d|2[0-3]):[0-5]\\d$") }
     val isBedTimeValid = uiState.bedTime.matches(timeRegex)
@@ -47,7 +52,7 @@ fun SleepTrackingScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -72,8 +77,8 @@ fun SleepTrackingScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .screenEdgePadded(),
+            verticalArrangement = Arrangement.spacedBy(spacing.space6)
         ) {
             Text(
                 text = "Log Your Sleep",
@@ -114,21 +119,19 @@ fun SleepTrackingScreen(
             )
 
             // Total Sleep Duration (Read Only)
-            Card(
+            AppCard(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                )
+                contentPadding = spacing.space4
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "Total Sleep Duration",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(spacing.space2))
                     Text(
                         text = uiState.totalSleepDuration,
                         style = MaterialTheme.typography.titleLarge,
@@ -164,7 +167,7 @@ fun SleepTrackingScreen(
             Button(
                 onClick = { viewModel.onSaveClicked() },
                 modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(spacing.space4),
                 enabled = !uiState.isSaving && isBedTimeValid && isWakeTimeValid
             ) {
                 if (uiState.isSaving) {
@@ -172,7 +175,7 @@ fun SleepTrackingScreen(
                         modifier = Modifier.size(24.dp),
                         strokeWidth = 2.dp
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(spacing.space2))
                 }
                 Text(if (uiState.isSaving) "Saving..." else "Save")
             }
