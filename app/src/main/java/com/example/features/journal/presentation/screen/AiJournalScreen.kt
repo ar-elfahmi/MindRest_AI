@@ -32,7 +32,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -58,6 +57,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.core.designsystem.MindRestTheme
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppScaffold
 import com.example.core.network.dto.JournalEntryRow
 import com.example.features.journal.presentation.viewmodel.JournalViewModel
 
@@ -84,6 +85,7 @@ fun AiJournalScreen(
     modifier: Modifier = Modifier,
     viewModel: JournalViewModel = viewModel(),
 ) {
+    val spacing = LocalSpacing.current
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -104,9 +106,8 @@ fun AiJournalScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -130,8 +131,8 @@ fun AiJournalScreen(
                 actions = {
                     Box(
                         modifier = Modifier
-                            .padding(end = 16.dp)
-                            .size(36.dp)
+                            .padding(end = spacing.space4)
+                            .size(36.dp) // residual: avatar size
                             .clip(CircleShape)
                             .background(
                                 Brush.linearGradient(
@@ -147,7 +148,7 @@ fun AiJournalScreen(
                             imageVector = Icons.Default.AutoAwesome,
                             contentDescription = "AI Therapist",
                             tint = Color.White,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(20.dp), // residual: icon size
                         )
                     }
                 },
@@ -173,7 +174,7 @@ fun AiJournalScreen(
                         .fillMaxWidth()
                         .weight(1f),
                     reverseLayout = false,
-                    contentPadding = PaddingValues(vertical = 8.dp),
+                    contentPadding = PaddingValues(vertical = spacing.space2),
                 ) {
                     items(state.chatMessages, key = { it.id }) { row ->
                         ChatMessageRow(row = row)
@@ -184,24 +185,24 @@ fun AiJournalScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    .padding(horizontal = spacing.space4, vertical = spacing.space2),
                                 horizontalArrangement = Arrangement.Start,
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(2.dp, 16.dp, 16.dp, 16.dp))
+                                        .clip(RoundedCornerShape(2.dp, 16.dp, 16.dp, 16.dp)) // residual: bubble shape
                                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                        .padding(horizontal = spacing.space4, vertical = spacing.space3),
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         CircularProgressIndicator(
-                                            strokeWidth = 2.dp,
-                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp, // residual: indicator stroke
+                                            modifier = Modifier.size(16.dp), // residual: indicator size
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Spacer(modifier = Modifier.width(spacing.space2))
                                         Text(
                                             text = "Sedang merenungkan…",
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -253,26 +254,27 @@ private fun ChatMessageBubble(
     text: String,
     isFromAi: Boolean,
 ) {
+    val spacing = LocalSpacing.current
     val alignment = if (isFromAi) Alignment.Start else Alignment.End
     val backgroundColor = if (isFromAi) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primary
     val contentColor = if (isFromAi) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onPrimary
     val shape = if (isFromAi) {
-        RoundedCornerShape(2.dp, 16.dp, 16.dp, 16.dp)
+        RoundedCornerShape(2.dp, 16.dp, 16.dp, 16.dp) // residual: bubble shape (asymmetric corners)
     } else {
-        RoundedCornerShape(16.dp, 2.dp, 16.dp, 16.dp)
+        RoundedCornerShape(16.dp, 2.dp, 16.dp, 16.dp) // residual: bubble shape (asymmetric corners)
     }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = spacing.space4, vertical = spacing.space2),
         horizontalAlignment = alignment,
     ) {
         Box(
             modifier = Modifier
                 .clip(shape)
                 .background(backgroundColor)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = spacing.space4, vertical = spacing.space3)
                 .fillMaxWidth(0.85f),
         ) {
             Text(
@@ -286,27 +288,28 @@ private fun ChatMessageBubble(
 
 @Composable
 private fun EmptyChatHint(modifier: Modifier = Modifier) {
+    val spacing = LocalSpacing.current
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 32.dp),
+            modifier = Modifier.padding(horizontal = spacing.space8),
         ) {
             Icon(
                 imageVector = Icons.Default.AutoAwesome,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(48.dp), // residual: icon size
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(spacing.space4))
             Text(
                 text = "Ruang Refleksi",
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(spacing.space2))
             Text(
                 text = "Ceritakan apa yang sedang kamu rasakan. Aku di sini untuk mendengarkan tanpa menghakimi.",
                 style = MaterialTheme.typography.bodyMedium,
@@ -321,13 +324,14 @@ private fun EmptyChatHint(modifier: Modifier = Modifier) {
 private fun QuickPromptsRow(
     onPromptClick: (String) -> Unit,
 ) {
+    val spacing = LocalSpacing.current
     val prompts = listOf("Pikiranku kacau", "Aku takut gagal", "Bantu aku tenang")
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = spacing.space4, vertical = spacing.space2),
+        horizontalArrangement = Arrangement.spacedBy(spacing.space2),
     ) {
         prompts.forEach { prompt ->
             SuggestionChip(
@@ -353,18 +357,19 @@ private fun ChatInputBar(
     onSendClick: () -> Unit,
     isSending: Boolean,
 ) {
+    val spacing = LocalSpacing.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .padding(bottom = 8.dp),
+            .padding(horizontal = spacing.space4, vertical = spacing.space3)
+            .padding(bottom = spacing.space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
             onClick = { /* Handle Voice */ },
             enabled = !isSending,
             modifier = Modifier
-                .size(48.dp)
+                .size(48.dp) // residual: icon button size
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
@@ -375,7 +380,7 @@ private fun ChatInputBar(
             )
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(spacing.space2))
 
         OutlinedTextField(
             value = inputText,
@@ -383,7 +388,7 @@ private fun ChatInputBar(
             placeholder = { Text(if (isSending) "Menunggu respons…" else "Ceritakan pelan-pelan…") },
             modifier = Modifier.weight(1f),
             enabled = !isSending,
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(24.dp), // residual: shape
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -393,7 +398,7 @@ private fun ChatInputBar(
         )
 
         if (inputText.isNotBlank() && !isSending) {
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(spacing.space2))
             IconButton(
                 onClick = onSendClick,
                 colors = IconButtonDefaults.iconButtonColors(
@@ -401,7 +406,7 @@ private fun ChatInputBar(
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(48.dp) // residual: icon button size
                     .clip(CircleShape),
             ) {
                 Icon(
