@@ -7,12 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Brightness3
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Brightness3
+import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.MusicNote
@@ -95,7 +95,7 @@ fun MainApp(
     // Tab items mapped to main screens
     val tabItems = listOf(
         NavigationItem("Home", Icons.Filled.Home, Icons.Outlined.Home),
-        NavigationItem("Sleep", Icons.Filled.Brightness3, Icons.Outlined.Brightness3),
+        NavigationItem("Journal", Icons.Filled.Book, Icons.Outlined.Book),
         NavigationItem("Relax", Icons.Filled.MusicNote, Icons.Outlined.MusicNote),
         NavigationItem("Ikigai", Icons.Filled.Explore, Icons.Outlined.Explore),
         NavigationItem("Profile", Icons.Filled.Person, Icons.Outlined.Person)
@@ -103,7 +103,7 @@ fun MainApp(
 
     val tabRoutes = listOf(
         Screen.Home.route,
-        Screen.Sleep.route,
+        Screen.Journal.route,
         Screen.Relaxation.route,
         Screen.Ikigai.route,
         Screen.Profile.route
