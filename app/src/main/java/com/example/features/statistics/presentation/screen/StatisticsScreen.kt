@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.core.designsystem.FeatureJourney
 import com.example.core.designsystem.FeatureLifestyle
+import com.example.core.designsystem.LocalSpacing
 import com.example.core.designsystem.MindRestTheme
 import com.example.core.designsystem.NumberS
 import com.example.core.designsystem.NumberXl
@@ -114,6 +115,7 @@ fun StatisticsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     var period by remember { mutableStateOf("Monthly") }
     var showShareDialog by remember { mutableStateOf(false) }
     var isComparativeOverlayEnabled by remember { mutableStateOf(false) }
@@ -154,7 +156,7 @@ fun StatisticsScreen(
                 label = "Mood Average",
                 value = moodVal,
                 unit = "/100",
-                color = Color(0xFFF472B6), // Hardcoded pink as per design spec
+                color = Color(0xFFF472B6), // residual: pink mood color, design-spec specific
                 icon = Icons.Default.SentimentSatisfied
             ),
             StatCardItem(
@@ -182,7 +184,7 @@ fun StatisticsScreen(
                 key = "mood",
                 values = activeTrendData.map { it.mood },
                 overlayValues = if (isComparativeOverlayEnabled) activePreviousTrendData.map { it.mood } else null,
-                color = Color(0xFFF472B6)
+                color = Color(0xFFF472B6) // residual: pink mood color, design-spec specific
             ),
             TrendChartItem(
                 label = "Sleep Trend",
@@ -257,7 +259,7 @@ fun StatisticsScreen(
                     )
                 },
                 text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(spacing.space3)) {
                         Text(
                             text = "Share your formatted $period wellness summary as a text report or image export.",
                             style = MaterialTheme.typography.bodyMedium,
@@ -265,14 +267,14 @@ fun StatisticsScreen(
                         )
                         Surface(
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(12.dp), // residual: RoundedCornerShape
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
                                 text = reportText,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(12.dp)
+                                modifier = Modifier.padding(spacing.space3)
                             )
                         }
                     }
@@ -293,9 +295,9 @@ fun StatisticsScreen(
                         Icon(
                             imageVector = Icons.Default.Share,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp) // residual: icon intrinsic size
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(6.dp)) // residual: no token for 6
                         Text("Share")
                     }
                 },
@@ -305,7 +307,7 @@ fun StatisticsScreen(
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(20.dp)
+                shape = RoundedCornerShape(20.dp) // residual: RoundedCornerShape
             )
         }
 
@@ -315,8 +317,8 @@ fun StatisticsScreen(
                 .weight(1f)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(horizontal = spacing.screenHorizontal, vertical = spacing.space4),
+            verticalArrangement = Arrangement.spacedBy(spacing.space5)
         ) {
             // 1. Period Toggle (Weekly, Monthly, Yearly)
             PeriodToggle(
@@ -332,8 +334,8 @@ fun StatisticsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("comparative_overlay_toggle_card"),
-                radius = 16.dp,
-                padding = 12.dp
+                radius = 16.dp, // residual: BaseCard drawing spec
+                padding = 12.dp // residual: BaseCard drawing spec
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -347,10 +349,10 @@ fun StatisticsScreen(
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp) // residual: no token for 10
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(10.dp),
+                            shape = RoundedCornerShape(10.dp), // residual: RoundedCornerShape
                             color = if (isComparativeOverlayEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
                         ) {
                             Icon(
@@ -358,8 +360,8 @@ fun StatisticsScreen(
                                 contentDescription = null,
                                 tint = if (isComparativeOverlayEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
-                                    .padding(8.dp)
-                                    .size(20.dp)
+                                    .padding(spacing.space2)
+                                    .size(20.dp) // residual: icon intrinsic size
                             )
                         }
                         Column {
@@ -372,7 +374,7 @@ fun StatisticsScreen(
                             Text(
                                 text = if (isComparativeOverlayEnabled) "Historical baseline visible as dashed line" else "Compare progress against previous $period",
                                 style = MaterialTheme.typography.bodySmall,
-                                fontSize = 11.sp,
+                                fontSize = 11.sp, // residual: chart text size
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -390,10 +392,10 @@ fun StatisticsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("sleep_summary_section"),
-                radius = 20.dp,
-                padding = 18.dp
+                radius = 20.dp, // residual: BaseCard drawing spec
+                padding = 18.dp // residual: no token for 18
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(spacing.space3)) {
                     val summaryTitle = "$period Sleep Summary"
                     val summarySubtitle = when (period) {
                         "Weekly" -> "7-Day Sleep Quality Trend"
@@ -441,40 +443,40 @@ fun StatisticsScreen(
                     if (isComparativeOverlayEnabled) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.space4)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp) // residual: no token for 6
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .width(16.dp)
-                                        .height(3.dp)
-                                        .background(primaryColor, RoundedCornerShape(2.dp))
+                                        .width(16.dp) // residual: legend swatch width
+                                        .height(3.dp) // residual: legend swatch height
+                                        .background(primaryColor, RoundedCornerShape(2.dp)) // residual: RoundedCornerShape
                                 )
                                 Text(
                                     text = "Current $period",
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontSize = 11.sp,
+                                    fontSize = 11.sp, // residual: chart text size
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp) // residual: no token for 6
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .width(16.dp)
-                                        .height(2.dp)
+                                        .width(16.dp) // residual: legend swatch width
+                                        .height(2.dp) // residual: legend swatch height
                                         .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.6f))
                                 )
                                 Text(
                                     text = "Previous $period",
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontSize = 11.sp,
+                                    fontSize = 11.sp, // residual: chart text size
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -490,13 +492,13 @@ fun StatisticsScreen(
                             Text(
                                 text = "AVG SCORE",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: chart text size
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = "${statCardItems[0].value} / 100",
                                 style = NumberXl,
-                                fontSize = 22.sp,
+                                fontSize = 22.sp, // residual: chart number size
                                 fontWeight = FontWeight.Bold,
                                 color = primaryColor
                             )
@@ -505,13 +507,13 @@ fun StatisticsScreen(
                             Text(
                                 text = "PEAK QUALITY",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: chart text size
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = if (period == "Weekly") "86 pts" else if (period == "Yearly") "90 pts" else "88 pts",
                                 style = NumberXl,
-                                fontSize = 22.sp,
+                                fontSize = 22.sp, // residual: chart number size
                                 fontWeight = FontWeight.Bold,
                                 color = FeatureJourney
                             )
@@ -520,13 +522,13 @@ fun StatisticsScreen(
                             Text(
                                 text = "CONSISTENCY",
                                 style = MaterialTheme.typography.labelSmall,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: chart text size
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
                                 text = if (period == "Weekly") "89%" else if (period == "Yearly") "94%" else "92%",
                                 style = NumberXl,
-                                fontSize = 22.sp,
+                                fontSize = 22.sp, // residual: chart number size
                                 fontWeight = FontWeight.Bold,
                                 color = SuccessColor
                             )
@@ -545,7 +547,7 @@ fun StatisticsScreen(
                         overlayValues = if (isComparativeOverlayEnabled) activePreviousTrendData.map { it.sleep } else null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(90.dp),
+                            .height(90.dp), // residual: chart container height
                         testTag = "summary_area_trend_chart"
                     )
 
@@ -558,7 +560,7 @@ fun StatisticsScreen(
                             Text(
                                 text = point.day,
                                 style = NumberS,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: chart text size
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -568,23 +570,23 @@ fun StatisticsScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         color = primaryColor.copy(alpha = 0.08f),
-                        shape = RoundedCornerShape(10.dp)
+                        shape = RoundedCornerShape(10.dp) // residual: RoundedCornerShape
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = spacing.space3, vertical = spacing.space2),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.TrendingUp,
                                 contentDescription = null,
                                 tint = SuccessColor,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp) // residual: icon intrinsic size
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(spacing.space2))
                             Text(
                                 text = insightText,
                                 style = MaterialTheme.typography.bodySmall,
-                                fontSize = 11.sp,
+                                fontSize = 11.sp, // residual: chart text size
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -594,13 +596,13 @@ fun StatisticsScreen(
 
             // 3. Stats Grid (2x2)
             Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(spacing.space3),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("stats_grid")
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.space3),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     StatCardView(
@@ -613,7 +615,7 @@ fun StatisticsScreen(
                     )
                 }
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.space3),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     StatCardView(
@@ -633,14 +635,14 @@ fun StatisticsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("trend_chart_card_${chartItem.key}"),
-                    radius = 16.dp,
-                    padding = 16.dp
+                    radius = 16.dp, // residual: BaseCard drawing spec
+                    padding = 16.dp // residual: BaseCard drawing spec
                 ) {
                     // Header
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 12.dp),
+                            .padding(bottom = spacing.space3),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -649,7 +651,7 @@ fun StatisticsScreen(
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                            letterSpacing = 1.3.sp
+                            letterSpacing = 1.3.sp // residual: chart letterSpacing
                         )
                         Badge(
                             text = "+8% this month",
@@ -667,7 +669,7 @@ fun StatisticsScreen(
                         overlayValues = chartItem.overlayValues,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(80.dp),
+                            .height(80.dp), // residual: chart container height
                         testTag = "area_chart_${chartItem.key}"
                     )
 
@@ -675,14 +677,14 @@ fun StatisticsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 4.dp),
+                            .padding(top = spacing.space1),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         activeTrendData.forEach { point ->
                             Text(
                                 text = point.day,
                                 style = NumberS,
-                                fontSize = 10.sp,
+                                fontSize = 10.sp, // residual: chart text size
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -698,12 +700,13 @@ private fun StatCardView(
     item: StatCardItem,
     modifier: Modifier = Modifier
 ) {
+    val spacing = LocalSpacing.current
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(16.dp)) // residual: RoundedCornerShape
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp))
-            .padding(16.dp)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(16.dp)) // residual: border stroke + RoundedCornerShape
+            .padding(spacing.space4)
             .testTag("stat_card_${item.label.lowercase().replace(" ", "_")}")
     ) {
         Column {
@@ -711,7 +714,7 @@ private fun StatCardView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp),
+                    .padding(bottom = spacing.space2),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -719,25 +722,25 @@ private fun StatCardView(
                     imageVector = item.icon,
                     contentDescription = item.label,
                     tint = item.color,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(18.dp) // residual: icon intrinsic size
                 )
                 Icon(
                     imageVector = Icons.Default.TrendingUp,
                     contentDescription = "Trending Up",
                     tint = SuccessColor,
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(14.dp) // residual: icon intrinsic size
                 )
             }
 
             // Score Row: Value + Unit (aligned by baseline)
             Row(
                 verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.spacedBy(2.dp) // residual: no token for 2
             ) {
                 Text(
                     text = item.value,
                     style = NumberXl,
-                    fontSize = 30.sp,
+                    fontSize = 30.sp, // residual: chart number size
                     fontWeight = FontWeight.Bold,
                     color = item.color,
                     modifier = Modifier.alignByBaseline()
@@ -754,9 +757,9 @@ private fun StatCardView(
             Text(
                 text = item.label,
                 style = MaterialTheme.typography.bodySmall,
-                fontSize = 12.sp,
+                fontSize = 12.sp, // residual: chart text size
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
+                modifier = Modifier.padding(top = spacing.space1)
             )
         }
     }
