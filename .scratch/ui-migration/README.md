@@ -63,7 +63,7 @@ complexity (pilot ringan dulu, heavy terakhir).
 | 15 | LifestyleScreen | ✅ done |
 | 16 | AchievementsScreen | ✅ done |
 | 17 | ReminderScreen | ✅ done |
-| 18 | AiJournalScreen | ⬜ todo |
+| 18 | AiJournalScreen | ✅ done |
 | 19 | NotificationScreen | ⬜ todo |
 | 20 | SettingsScreen | ⬜ todo |
 
