@@ -26,7 +26,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -42,8 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.core.designsystem.LocalSpacing
+import com.example.core.designsystem.components.AppScaffold
 import com.example.features.ikigai.presentation.viewmodel.IkigaiAssessmentViewModel
 
 /**
@@ -83,6 +83,7 @@ fun IkigaiAssessmentScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val spacing = LocalSpacing.current
 
     // Trigger navigasi ke loading screen begitu savedAssessmentId terisi.
     LaunchedEffect(uiState.savedAssessmentId) {
@@ -95,7 +96,7 @@ fun IkigaiAssessmentScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
@@ -112,7 +113,7 @@ fun IkigaiAssessmentScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = spacing.screenHorizontal, vertical = spacing.screenTop)
                 .verticalScroll(rememberScrollState()),
         ) {
             // ---------------- Stepper header ----------------
@@ -121,13 +122,13 @@ fun IkigaiAssessmentScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(spacing.space2))
             LinearProgressIndicator(
                 progress = { (uiState.currentStep + 1).toFloat() / uiState.totalSteps },
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(spacing.space6))
 
             // ---------------- Step content ----------------
             val step = uiState.currentStep
@@ -136,7 +137,7 @@ fun IkigaiAssessmentScreen(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
             )
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(spacing.space1))
             Text(
                 text = when (step) {
                     4 -> "Pilih salah satu yang paling relevan."
@@ -147,7 +148,7 @@ fun IkigaiAssessmentScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(spacing.space5))
 
             when (step) {
                 0 -> OutlinedTextField(
@@ -193,19 +194,19 @@ fun IkigaiAssessmentScreen(
                 )
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(spacing.space8))
 
             // ---------------- Footer nav buttons ----------------
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(spacing.space3),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (uiState.currentStep > 0) {
                     OutlinedButton(
                         onClick = viewModel::onPrevStep,
                         modifier = Modifier.weight(1f),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp), // residual: no token for 14
                     ) {
                         Text("Kembali")
                     }
@@ -217,7 +218,7 @@ fun IkigaiAssessmentScreen(
                         onClick = viewModel::onNextStep,
                         enabled = uiState.isCurrentStepValid(),
                         modifier = Modifier.weight(1f),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp), // residual: no token for 14
                     ) {
                         Text("Lanjut")
                     }
@@ -226,15 +227,15 @@ fun IkigaiAssessmentScreen(
                         onClick = viewModel::onSaveAssessment,
                         enabled = uiState.canSave() && !uiState.isSaving,
                         modifier = Modifier.weight(1f),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(14.dp), // residual: no token for 14
                     ) {
                         if (uiState.isSaving) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp), // residual: spinner intrinsic size
+                                strokeWidth = 2.dp, // residual: stroke
                                 color = MaterialTheme.colorScheme.onPrimary,
                             )
-                            Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(spacing.space2))
                             Text("Menyimpan...")
                         } else {
                             Text("Generate Laporan")
@@ -243,7 +244,7 @@ fun IkigaiAssessmentScreen(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(spacing.space4))
         }
     }
 }
@@ -259,11 +260,12 @@ private fun ChipChoiceGrid(
     selected: String?,
     onSelect: (String) -> Unit,
 ) {
+    val spacing = LocalSpacing.current
     // 2 kolom chip layout via FlowRow equivalent (Column + Row sederhana).
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(spacing.space2)) {
         options.chunked(2).forEach { rowItems ->
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(spacing.space2),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 rowItems.forEach { option ->
@@ -278,7 +280,7 @@ private fun ChipChoiceGrid(
                             )
                         },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(12.dp), // residual: no shapes token for 12
                         colors = FilterChipDefaults.filterChipColors(),
                     )
                 }
@@ -296,6 +298,7 @@ private fun SatisfactionSlider(
     value: Int,
     onValueChange: (Int) -> Unit,
 ) {
+    val spacing = LocalSpacing.current
     Column {
         Text(
             text = "Skor: $value / 10",
@@ -304,7 +307,7 @@ private fun SatisfactionSlider(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(spacing.space2))
         Slider(
             value = value.toFloat(),
             onValueChange = { onValueChange(it.toInt()) },
