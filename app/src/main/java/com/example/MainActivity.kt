@@ -1,5 +1,6 @@
 package com.example
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -62,6 +63,7 @@ import com.example.features.reminder.presentation.screen.ReminderScreen
 import com.example.features.settings.presentation.screen.SettingsScreen
 import com.example.features.sleep.presentation.screen.SleepHubScreen
 import com.example.features.sleep.presentation.screen.SleepTrackingScreen
+import androidx.compose.ui.platform.LocalContext
 import com.example.features.statistics.presentation.screen.StatisticsScreen
 
 class MainActivity : ComponentActivity() {
@@ -91,6 +93,17 @@ fun MainApp(
     val authRepository = remember { AuthRepositoryImpl() }
     val sessionStatus by authRepository.sessionStatus.collectAsState()
     val scope = rememberCoroutineScope()
+
+    // Flag "onboarding sudah selesai" — persist di SharedPreferences supaya
+    // onboarding hanya tampil sekali per install (fix: onboarding tidak pernah
+    // muncul karena sessionStatus resolve lebih cepat dari auto-advance splash).
+    val context = LocalContext.current
+    val onboardingPrefs = remember {
+        context.getSharedPreferences("mindrest_onboarding", Context.MODE_PRIVATE)
+    }
+    var onboardingCompleted by remember {
+        mutableStateOf(onboardingPrefs.getBoolean("completed", false))
+    }
 
     // Tab items mapped to main screens
     val tabItems = listOf(
@@ -154,7 +167,12 @@ fun MainApp(
                         }
                         is SessionStatus.NotAuthenticated,
                         is SessionStatus.RefreshFailure -> {
-                            navController.navigate(Screen.Login.route) {
+                            // Belum login: tampilkan Onboarding hanya di first run,
+                            // selanjutnya langsung Login.
+                            val target =
+                                if (!onboardingCompleted) Screen.Onboarding.route
+                                else Screen.Login.route
+                            navController.navigate(target) {
                                 popUpTo(Screen.Splash.route) { inclusive = true }
                             }
                         }
@@ -184,6 +202,10 @@ fun MainApp(
             composable(Screen.Onboarding.route) {
                 OnboardingScreen(
                     onComplete = {
+                        // Tandai selesai sebelum navigasi, supaya app launch
+                        // berikutnya langsung ke Login/Home.
+                        onboardingPrefs.edit().putBoolean("completed", true).apply()
+                        onboardingCompleted = true
                         navController.navigate(Screen.Login.route) {
                             popUpTo(Screen.Onboarding.route) { inclusive = true }
                         }

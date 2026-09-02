@@ -48,7 +48,7 @@ rem -----------------------------------------------------------
 rem 1) Build APK incremental
 rem -----------------------------------------------------------
 echo [*] Build APK dari HEAD saat ini...
-"%GRADLE%" :app:assembleDebug --console=plain
+call "%GRADLE%" :app:assembleDebug --console=plain
 if errorlevel 1 (
   echo.
   echo [X] BUILD GAGAL.

@@ -40,7 +40,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import com.example.core.designsystem.DarkAccent
 import com.example.core.designsystem.DarkBackground
 import com.example.core.designsystem.DisplayFontFamily
@@ -147,6 +146,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         homeViewModel.onLoadIkigaiAssessmentCount()
         homeViewModel.onLoadSleepInsightPreview()
+        homeViewModel.onLoadUserName()
     }
 
     // Tampilkan error snackbar bila insert mood/tidur gagal.
@@ -214,7 +214,7 @@ fun HomeScreen(
         ) {
             // 1. CUSTOM HEADER (Top Area)
         HeaderSection(
-            userName = "Aria Kusuma",
+            userName = homeUiState.userName ?: "Pengguna",
             greeting = jakartaGreeting(),
             onNotificationClick = onNavigateToNotifications,
             onSettingsClick = onNavigateToSettings,
@@ -383,26 +383,9 @@ if (showCheckInSheet) {
                 // di-trigger setelah save sukses — single source of truth dari DB.
                 moodViewModel.saveMoodScore(moodScore)
 
-                // Feedback UX berbasis skor mood (<= 2 = berat → tawarkan refleksi).
-                val needsHelp = moodScore <= 2
-
-                coroutineScope.launch {
-                    if (needsHelp) {
-                        val result = snackbarHostState.showSnackbar(
-                            message = "Check-in tersimpan! Pikiranmu berat — mau mengurainya?",
-                            actionLabel = "Cerita Yuk",
-                            duration = SnackbarDuration.Long
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            onNavigateToAiJournal()
-                        }
-                    } else {
-                        snackbarHostState.showSnackbar(
-                            message = "Check-in tersimpan! ✨",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                }
+                // Setelah check-in tersimpan, arahkan langsung ke riwayat mood
+                // (MoodTrackingScreen) agar user melihat hasil check-in-nya.
+                onNavigateToMoodTracking()
             }
         )
     }

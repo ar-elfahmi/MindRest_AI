@@ -7,6 +7,7 @@ import com.example.core.network.dto.JournalEntryInsert
 import com.example.features.journal.data.repository.JournalEdgeFunctionException
 import com.example.features.journal.data.repository.JournalRepository
 import com.example.features.journal.data.repository.JournalRepositoryImpl
+import com.example.features.journal.data.repository.groupChatSessions
 import com.example.features.journal.presentation.state.JournalUiState
 import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -107,8 +108,16 @@ class JournalViewModel(
 
             repository.getJournalEntries(userId, limit)
                 .onSuccess { logs ->
+                    // Group chat rows per session_id supaya Riwayat Jurnal
+                    // menampilkan satu kartu per SESI, bukan per pesan.
+                    val chatSessions = groupChatSessions(logs)
                     _uiState.update {
-                        it.copy(isLoadingHistory = false, recentEntries = logs, historyError = null)
+                        it.copy(
+                            isLoadingHistory = false,
+                            recentEntries = logs,
+                            chatSessions = chatSessions,
+                            historyError = null,
+                        )
                     }
                 }
                 .onFailure { e ->

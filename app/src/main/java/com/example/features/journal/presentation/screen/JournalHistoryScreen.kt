@@ -57,6 +57,7 @@ import com.example.core.designsystem.components.screenEdge
 import com.example.core.designsystem.components.screenEdgePadded
 import com.example.core.designsystem.components.screenEdgeValues
 import com.example.core.network.dto.JournalEntryRow
+import com.example.features.journal.data.dto.ChatSessionSummary
 import com.example.features.journal.presentation.viewmodel.JournalViewModel
 import com.example.features.mood.presentation.viewmodel.MoodViewModel
 import java.time.LocalDate
@@ -85,7 +86,13 @@ fun JournalHistoryScreen(
         moodViewModel.onLoadWeeklyScores()
     }
 
-    val entries = state.recentEntries.map { it.toJournalEntryData() }
+    val entries = if (state.chatSessions.isNotEmpty()) {
+        // Satu kartu per SESI chat (fix: sebelumnya tiap pesan jadi kartu sendiri).
+        state.chatSessions.map { it.toJournalEntryData() }
+    } else {
+        // Fallback: entri legacy (manual / tanpa session_id).
+        state.recentEntries.map { it.toJournalEntryData() }
+    }
 
     AppScaffold(
         modifier = modifier.fillMaxSize(),
@@ -193,6 +200,19 @@ fun JournalHistoryScreen(
             }
         }
     }
+}
+
+/** Konversi ringkasan sesi chat ke model UI — satu sesi = satu kartu. */
+private fun ChatSessionSummary.toJournalEntryData(): JournalEntryData {
+    val displayDate = formatIsoTimestamp(lastMessageAt.ifBlank { startedAt })
+    val base = firstUserMessage ?: lastMessage ?: ""
+    val snippet = base.take(140).let { if (base.length > 140) "$it…" else it }
+    return JournalEntryData(
+        date = displayDate,
+        moodEmoji = "💬",
+        moodText = "$messageCount pesan",
+        summary = snippet.ifBlank { "(kosong)" },
+    )
 }
 
 /** Konversi row Supabase ke model UI — format tanggal sederhana untuk MVP. */

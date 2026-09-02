@@ -6,6 +6,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.postgrest.Postgrest
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Lazy + null-safe Supabase client.
@@ -45,6 +46,10 @@ object SupabaseClient {
                     supabaseUrl = BuildConfig.SUPABASE_URL,
                     supabaseKey = BuildConfig.SUPABASE_ANON_KEY
                 ) {
+                    // Default supabase-kt = 10 detik → Edge Function Gemini
+                    // (generate-ikigai-report / chat-gemini) sering kena timeout.
+                    // Naikkan ke ~20 detik sesuai latency cold-start Gemini.
+                    requestTimeout = 20.seconds
                     install(Postgrest)
                     install(Auth)
                     install(Functions)

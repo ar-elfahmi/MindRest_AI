@@ -3,10 +3,12 @@ package com.example.features.home.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.core.network.SupabaseClient
+import com.example.core.network.dto.ProfileRow
 import com.example.features.home.presentation.state.HomeUiState
 import com.example.features.ikigai.data.repository.IkigaiRepository
 import com.example.features.ikigai.data.repository.IkigaiRepositoryImpl
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -103,5 +105,37 @@ class HomeViewModel(
 
     fun onSleepInsightErrorShown() {
         _uiState.update { it.copy(sleepInsightError = null) }
+    }
+
+    /**
+     * Muat nama tampilan user yang login untuk greeting header HomeScreen.
+     *
+     * Sumber: tabel `profiles` (sama dengan ProfileViewModel). Fallback:
+     * prefix email sebelum "@". Silent-fail — UI menampilkan fallback
+     * "Pengguna" bila data tidak tersedia, tanpa crash.
+     */
+    fun onLoadUserName() {
+        val client = SupabaseClient.client ?: return
+        val currentUser = client.auth.currentUserOrNull() ?: return
+
+        viewModelScope.launch {
+            runCatching {
+                client.postgrest.from("profiles")
+                    .select { filter { eq("id", currentUser.id) } }
+                    .decodeSingleOrNull<ProfileRow>()
+            }.onSuccess { row ->
+                val name = row?.displayName
+                    ?.takeIf { it.isNotBlank() }
+                    ?: currentUser.email?.substringBefore("@")
+                    ?.takeIf { it.isNotBlank() }
+                _uiState.update { it.copy(userName = name) }
+            }.onFailure {
+                // Fallback ke prefix email; jangan ganggu widget lain di Home.
+                val fallback = currentUser.email
+                    ?.substringBefore("@")
+                    ?.takeIf { it.isNotBlank() }
+                _uiState.update { it.copy(userName = fallback) }
+            }
+        }
     }
 }

@@ -21,6 +21,8 @@ data class HomeUiState(
     val sleepInsightPreview: String? = null,
     val isLoadingSleepInsight: Boolean = false,
     val sleepInsightError: String? = null,
+    /** Nama tampilan user yang login (dari tabel `profiles`). Null = belum termuat. */
+    val userName: String? = null,
 ) {
     /** True jika user sudah pernah submit minimal 1 assessment Ikigai. */
     val hasIkigaiAssessment: Boolean get() = ikigaiAssessmentCount > 0

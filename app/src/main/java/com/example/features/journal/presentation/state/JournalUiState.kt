@@ -1,6 +1,7 @@
 package com.example.features.journal.presentation.state
 
 import com.example.core.network.dto.JournalEntryRow
+import com.example.features.journal.data.dto.ChatSessionSummary
 
 /**
  * UI state untuk JournalScreen (legacy full-entry) + AiJournalScreen (chat).
@@ -20,6 +21,8 @@ data class JournalUiState(
 
     // -------------------- History list (JournalHistoryScreen) --------------------
     val recentEntries: List<JournalEntryRow> = emptyList(),
+    /** Riwayat chat di-group per session_id — satu item = satu sesi refleksi. */
+    val chatSessions: List<ChatSessionSummary> = emptyList(),
     val isLoadingHistory: Boolean = false,
     val historyError: String? = null,
 
